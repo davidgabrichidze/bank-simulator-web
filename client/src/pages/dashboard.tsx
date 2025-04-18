@@ -1,22 +1,31 @@
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  CreditCard, 
-  ArrowRightLeft, 
-  Receipt, 
-  Bell 
+import {
+  CreditCard,
+  ArrowRightLeft,
+  Receipt,
+  Bell,
+  LineChart,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Account, Transaction, Loan, Event } from "@/types";
 
 export default function Dashboard() {
+  // In a real app, this data would come from APIs
+  const accounts: Account[] = [];
+  const recentTransactions: Transaction[] = [];
+  const activeLoans: Loan[] = [];
+  const recentEvents: Event[] = [];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome to the Bank Operations Simulator. Use this tool to simulate banking operations and track events.
+            Overview of your financial activities
           </p>
         </div>
         
@@ -24,14 +33,14 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Total Accounts
+                Total Balance
               </CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">$12,340.56</div>
               <p className="text-xs text-muted-foreground">
-                Active accounts in the simulator
+                Across all accounts
               </p>
             </CardContent>
           </Card>
@@ -39,15 +48,17 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Transactions
+                Monthly Transactions
               </CardTitle>
               <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                Total transactions processed
-              </p>
+              <div className="text-2xl font-bold">24</div>
+              <div className="flex items-center pt-1 text-xs text-green-500">
+                <ArrowUpRight className="mr-1 h-3.5 w-3.5" />
+                <span>12.5%</span>
+                <span className="text-muted-foreground ml-1">from last month</span>
+              </div>
             </CardContent>
           </Card>
           
@@ -59,9 +70,9 @@ export default function Dashboard() {
               <Receipt className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">2</div>
               <p className="text-xs text-muted-foreground">
-                Loans currently active
+                Total: $25,000.00
               </p>
             </CardContent>
           </Card>
@@ -69,53 +80,81 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Events
+                Pending Events
               </CardTitle>
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                Events sent to Optio CDP
-              </p>
+              <div className="text-2xl font-bold">7</div>
+              <div className="flex items-center pt-1 text-xs text-red-500">
+                <ArrowDownRight className="mr-1 h-3.5 w-3.5" />
+                <span>3</span>
+                <span className="text-muted-foreground ml-1">require attention</span>
+              </div>
             </CardContent>
           </Card>
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-8">
+          <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Accounts Management</CardTitle>
+              <CardTitle>Monthly Cash Flow</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <p>Create new accounts, view details, and manage existing accounts.</p>
-              <Link href="/accounts">
-                <Button className="w-full">Go to Accounts</Button>
-              </Link>
+            <CardContent className="pl-2">
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                <LineChart className="h-8 w-8 mr-2" />
+                <span>Chart will appear here</span>
+              </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Transactions</CardTitle>
+              <CardTitle>Spending Categories</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <p>Process deposits, withdrawals, transfers, and scheduled payments.</p>
-              <Link href="/transactions">
-                <Button className="w-full">Go to Transactions</Button>
-              </Link>
+            <CardContent>
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                <TrendingUp className="h-8 w-8 mr-2" />
+                <span>Chart will appear here</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-8">
+          <Card className="col-span-5">
+            <CardHeader>
+              <CardTitle>Recent Transactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentTransactions.length > 0 ? (
+                <div>
+                  {/* Transaction list would go here */}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
+                  <ArrowRightLeft className="h-8 w-8 mb-2" />
+                  <p>No recent transactions to display</p>
+                </div>
+              )}
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="col-span-3">
             <CardHeader>
-              <CardTitle>Loans</CardTitle>
+              <CardTitle>Recent Events</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <p>Apply for loans, view payment schedules, and manage repayments.</p>
-              <Link href="/loans">
-                <Button className="w-full">Go to Loans</Button>
-              </Link>
+            <CardContent>
+              {recentEvents.length > 0 ? (
+                <div>
+                  {/* Events list would go here */}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
+                  <Bell className="h-8 w-8 mb-2" />
+                  <p>No recent events to display</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

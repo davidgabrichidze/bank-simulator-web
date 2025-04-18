@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Account, Loan, LoanPayment } from "@/types";
 
 export default function LoansPage() {
   const { toast } = useToast();
@@ -50,9 +51,9 @@ export default function LoansPage() {
   const [paymentDate, setPaymentDate] = useState("");
   
   // Sample data - in a real app, this would come from an API
-  const accounts = [];
-  const loans = [];
-  const loanPayments = [];
+  const accounts: Account[] = [];
+  const loans: Loan[] = [];
+  const loanPayments: LoanPayment[] = [];
 
   const handleLoanApplication = (e: React.FormEvent) => {
     e.preventDefault();
