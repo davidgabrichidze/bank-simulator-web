@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Event } from "@/types";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -45,7 +46,7 @@ export default function EventsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   
   // Sample data - in a real app, this would come from an API
-  const events = [];
+  const events: Event[] = [];
 
   const openEventDetails = (event: any) => {
     setSelectedEvent(event);

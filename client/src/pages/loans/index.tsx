@@ -350,9 +350,7 @@ export default function LoansPage() {
                   <p className="mt-1 text-sm text-muted-foreground max-w-md">
                     You don't have any active loans. Apply for a loan to get started.
                   </p>
-                  <DialogTrigger asChild>
-                    <Button className="mt-4">Apply for Loan</Button>
-                  </DialogTrigger>
+                  <Button className="mt-4" onClick={() => setApplyDialogOpen(true)}>Apply for Loan</Button>
                 </CardContent>
               </Card>
             ) : (

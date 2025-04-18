@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Account } from "@/types";
 
 export default function AccountsPage() {
   const [open, setOpen] = useState(false);
@@ -32,7 +33,7 @@ export default function AccountsPage() {
   const [initialBalance, setInitialBalance] = useState("");
 
   // Sample data - in a real app, this would come from an API
-  const accounts = [];
+  const accounts: Account[] = [];
 
   const handleCreateAccount = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,9 +157,7 @@ export default function AccountsPage() {
                 Create your first account to get started with the simulator.
                 You can create personal or business accounts with different currencies.
               </p>
-              <DialogTrigger asChild>
-                <Button className="mt-4">Create Account</Button>
-              </DialogTrigger>
+              <Button className="mt-4" onClick={() => setOpen(true)}>Create Account</Button>
             </CardContent>
           </Card>
         ) : (
