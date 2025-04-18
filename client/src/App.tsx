@@ -10,15 +10,21 @@ import TransactionsPage from "@/pages/transactions";
 import LoansPage from "@/pages/loans";
 import EventsPage from "@/pages/events";
 import AdminPage from "@/pages/admin";
+import ClientsPage from "@/pages/clients";
+import SimulatorPage from "@/pages/simulator";
+import GeneratorPage from "@/pages/generator";
 
 function Router() {
   return (
     <Switch>
       {/* Main pages */}
       <Route path="/" component={Dashboard}/>
+      <Route path="/clients" component={ClientsPage}/>
       <Route path="/accounts" component={AccountsPage}/>
       <Route path="/transactions" component={TransactionsPage}/>
       <Route path="/loans" component={LoansPage}/>
+      <Route path="/simulator" component={SimulatorPage}/>
+      <Route path="/generator" component={GeneratorPage}/>
       <Route path="/events" component={EventsPage}/>
       <Route path="/admin" component={AdminPage}/>
       

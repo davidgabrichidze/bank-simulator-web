@@ -1,0 +1,91 @@
+ROLE: You are an expert full‑stack developer working inside Replit.
+
+GOAL: Produce a **Bank Operations Simulator** for Optio’s demo/QA needs.  
+• Covers *bank‑side* workflows (multi‑customer, multi‑product) – not just a single end‑user.  
+• Every simulated operation must POST an event to Optio CDP REST API so that data instantly appears in Optio dashboards.
+
+CONTEXT  
+Optio exposes `POST /v1/banking-events` (JWT via ENV OPTIO_TOKEN).  
+Event schema example:
+{
+  "eventId": "uuid",
+  "type": "deposit-made",
+  "occurredAt": "ISO‑8601",
+  "payload": {
+    "clientId": "C123",
+    "accountId": "A456",
+    "amount": 250.00,
+    "currency": "USD",
+    "channel": "web-simulator",
+    "purpose": "salary"
+  }
+}
+
+––––––––––––––––––––––––––  
+1. FUNCTIONAL SCOPE  
+A. **Client & Product Management**  
+   1. CRUD clients (person / business).  
+   2. Attach products to a client:  
+      • Current / savings accounts • Debit & credit cards • Deposits • Loans.  
+   3. View product details & history.
+
+B. **Digital Channel Simulation** (per client)  
+   *Launch an embedded simulator in chosen channel:*  
+   • Internet‑banking (web UI) • iOS mobile banking • Android mobile banking.  
+   From this UI an operator can perform the same operations available in “Transactions” below.
+
+C. **Transactions**  
+   1. **Card**: purchase, ATM cash‑out, card‑to‑card transfer.  
+   2. **Non‑card**: cash deposit/withdraw, internal transfer, external transfer (SWIFT/SEPA), scheduled payment.  
+   3. Attributes captured: amount, currency, purpose, channel, FX rate (if cross‑currency), description field.
+
+D. **Bulk Activity Generator**  
+   *Admin panel* → “Generate demo traffic”:  
+   • Input = number of clients (1 – 5 000 000).  
+   • Simulator autogenerates realistic profiles + random operations stream (rate slider).  
+   • Progress bar, ETA, cancel button.  
+   • All generated events also forwarded to Optio.
+
+E. **Audit & Event Feed**  
+   • Real‑time table (WebSocket) with every operation, status, Optio event ID link.  
+   • Filters by client, product, channel, time range.
+
+F. **Configuration / Maintenance**  
+   • Toggle Optio sync on/off.  
+   • Reset simulator DB.  
+   • ENV editor for API URL, JWT, FX‑rate seed.
+
+––––––––––––––––––––––––––  
+2. TECHNICAL REQUIREMENTS  
+
+Frontend  
+• You may pick the Replit‑preferred stack (Angular 19 + Tailwind **OR** React + Vite + Tailwind).  
+• Clean minimalist UX, dark & light themes, responsive.  
+• State management: ngrx (if Angular) or Redux Toolkit (if React).  
+
+Backend  
+• **NestJS 10** (TypeScript).  
+• Hexagonal layering (`shared → core → features`).  
+• In‑memory DB or SQLite via TypeORM (keep persistence pluggable).  
+• Swagger `/api/docs`.  
+• WebSocket gateway for live event feed.  
+• Event dispatcher service wrapping Optio API calls.
+
+Other  
+• Nx monorepo layout for full‑stack workspace.  
+• Dockerfile + docker‑compose (services: app‑api:3000, app‑web:4200).  
+• Jest unit tests (≥ 80 % core coverage) & one Cypress e2e (happy path).  
+
+––––––––––––––––––––––––––  
+3. NON‑FUNCTIONAL  
+• SRP‑compliant services.  
+• English names, past‑tense verbs for actions (`clientCreated`, `cardIssued`).  
+• Clean code, ESLint + Prettier.  
+• README with one‑command run: `npm run start:all`.
+
+––––––––––––––––––––––––––  
+4. DELIVERABLES  
+1. Running Replit workspace URL.  
+2. Git repo export.  
+3. Short Loom (≤ 3 min) demo: create client → issue card → make card purchase via iOS simulator → Optio dashboard update.
+
