@@ -1,0 +1,142 @@
+<div class="container mx-auto p-4">
+  <div class="mb-6">
+    <a mat-button routerLink="/loans" class="mb-2">
+      <mat-icon>arrow_back</mat-icon> Back to Loans
+    </a>
+    <h2 class="text-2xl font-bold">Apply for a Loan</h2>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Loan Application Form -->
+    <div class="md:col-span-2 bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-6">
+      <form [formGroup]="loanForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="w-full mb-4">
+          <mat-label>Select Account</mat-label>
+          <mat-select formControlName="accountId">
+            <mat-option *ngFor="let account of accounts$ | async" [value]="account.id" [disabled]="!account.isActive">
+              {{ account.name }} ({{ account.accountNumber }}) - {{ account.balance | currency:account.currency }}
+              <span *ngIf="!account.isActive" class="text-error ml-2">(Closed)</span>
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="loanForm.get('accountId')?.hasError('required')">
+            Account is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full mb-4">
+          <mat-label>Loan Amount</mat-label>
+          <span matPrefix>$&nbsp;</span>
+          <input matInput type="number" formControlName="amount" min="100" step="100">
+          <mat-error *ngIf="loanForm.get('amount')?.hasError('required')">
+            Loan amount is required
+          </mat-error>
+          <mat-error *ngIf="loanForm.get('amount')?.hasError('min')">
+            Loan amount must be at least $100
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full mb-4">
+          <mat-label>Currency</mat-label>
+          <mat-select formControlName="currency">
+            <mat-option *ngFor="let currency of currencies" [value]="currency">
+              {{ currency }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="loanForm.get('currency')?.hasError('required')">
+            Currency is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full mb-4">
+          <mat-label>Interest Rate (%)</mat-label>
+          <input matInput type="number" formControlName="interestRate" min="0.1" max="30" step="0.1">
+          <span matSuffix>%</span>
+          <mat-error *ngIf="loanForm.get('interestRate')?.hasError('required')">
+            Interest rate is required
+          </mat-error>
+          <mat-error *ngIf="loanForm.get('interestRate')?.hasError('min') || loanForm.get('interestRate')?.hasError('max')">
+            Interest rate must be between 0.1% and 30%
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full mb-4">
+          <mat-label>Term (months)</mat-label>
+          <mat-select formControlName="term">
+            <mat-option *ngFor="let term of termOptions" [value]="term">
+              {{ term }} months
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="loanForm.get('term')?.hasError('required')">
+            Term is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full mb-6">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="startDate">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-error *ngIf="loanForm.get('startDate')?.hasError('required')">
+            Start date is required
+          </mat-error>
+        </mat-form-field>
+
+        <div class="flex justify-end">
+          <button mat-button type="button" routerLink="/loans" class="mr-2">Cancel</button>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit" 
+            [disabled]="loanForm.invalid || (loading$ | async)"
+          >
+            <mat-spinner *ngIf="loading$ | async" diameter="20" class="mr-2"></mat-spinner>
+            Submit Application
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Loan Details Summary -->
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-6">
+      <h3 class="text-lg font-semibold mb-4">Loan Summary</h3>
+      
+      <div class="space-y-4">
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 text-sm">Loan Amount</p>
+          <p class="text-xl font-medium">{{ formatCurrency(loanForm.get('amount')?.value || 0) }}</p>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 text-sm">Interest Rate</p>
+          <p class="text-xl font-medium">{{ loanForm.get('interestRate')?.value || 0 }}%</p>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 text-sm">Term</p>
+          <p class="text-xl font-medium">{{ loanForm.get('term')?.value || 0 }} months</p>
+        </div>
+        
+        <div class="pt-4 border-t border-neutral-200 dark:border-neutral-600">
+          <p class="text-neutral-500 dark:text-neutral-400 text-sm">Monthly Payment</p>
+          <p class="text-2xl font-semibold text-primary">{{ formatCurrency(monthlyPayment) }}</p>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 text-sm">Total Payment</p>
+          <p class="text-xl font-medium">{{ formatCurrency(totalPayment) }}</p>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 text-sm">Total Interest</p>
+          <p class="text-xl font-medium">{{ formatCurrency(totalInterest) }}</p>
+        </div>
+      </div>
+      
+      <div class="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-600">
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">
+          This is a simulated loan application. The credit score will be generated automatically and the loan approval decision is instant.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

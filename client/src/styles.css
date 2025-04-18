@@ -1,0 +1,120 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+html, body { height: 100%; }
+body { margin: 0; font-family: 'Segoe UI', Roboto, "Helvetica Neue", sans-serif; }
+
+/* Theme customization */
+:root {
+  --primary: #0066cc;
+  --primary-light: #4d94ff;
+  --primary-dark: #004c99;
+  
+  --secondary: #5c2d91;
+  --secondary-light: #7b4fb2;
+  --secondary-dark: #3e1f62;
+  
+  --success: #107c10;
+  --success-light: #35a535;
+  --success-dark: #0b570b;
+  
+  --error: #d13438;
+  --error-light: #e25e62;
+  --error-dark: #a12427;
+  
+  --warning: #ffb900;
+  --warning-light: #ffcd4d;
+  --warning-dark: #cc9400;
+}
+
+/* Light theme */
+.mat-typography {
+  background-color: #f3f2f1;
+  color: #323130;
+}
+
+/* Dark theme */
+.dark .mat-typography {
+  background-color: #201f1e;
+  color: #ffffff;
+}
+
+/* Custom sidebar styling */
+.sidebar-link.active {
+  @apply bg-primary bg-opacity-10 text-primary border-l-4 border-primary;
+}
+
+/* Custom tab styling */
+.tab.active {
+  @apply border-b-2 border-primary text-primary;
+}
+
+/* Custom Material styles */
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-focus-overlay {
+  background-color: var(--primary-light);
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--primary);
+}
+
+.mat-mdc-raised-button.mat-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.mat-mdc-raised-button.mat-accent {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.mat-mdc-raised-button.mat-accent:hover {
+  background-color: var(--secondary-dark);
+}
+
+.mat-mdc-raised-button.mat-warn {
+  background-color: var(--error);
+}
+
+.mat-mdc-raised-button.mat-warn:hover {
+  background-color: var(--error-dark);
+}
+
+.mat-mdc-slide-toggle.mat-primary {
+  --mdc-switch-selected-handle-color: var(--primary);
+  --mdc-switch-selected-track-color: var(--primary-light);
+  --mdc-switch-selected-hover-track-color: var(--primary-light);
+  --mdc-switch-selected-pressed-track-color: var(--primary-light);
+  --mdc-switch-selected-focus-track-color: var(--primary-light);
+}
+
+/* Custom dialog container */
+.custom-dialog-container .mat-mdc-dialog-container {
+  padding: 0;
+}
+
+/* Custom table styling */
+.mat-mdc-table {
+  background: transparent;
+}
+
+.mat-mdc-header-row {
+  background-color: #f3f2f1;
+}
+
+.dark .mat-mdc-header-row {
+  background-color: #323130;
+}
+
+.mat-mdc-row:hover {
+  background-color: rgba(0, 102, 204, 0.05);
+}
+
+.dark .mat-mdc-row:hover {
+  background-color: rgba(77, 148, 255, 0.05);
+}
+
+/* Custom spinner color */
+.mat-progress-spinner circle {
+  stroke: var(--primary);
+}

@@ -1,0 +1,57 @@
+<div class="container mx-auto p-4">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Transactions</h2>
+  </div>
+
+  <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5 mb-6">
+    <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button 
+        (click)="openDepositModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">add_circle</mat-icon>
+        <span class="text-sm font-medium">Deposit</span>
+      </button>
+      <button 
+        (click)="openWithdrawModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">remove_circle</mat-icon>
+        <span class="text-sm font-medium">Withdraw</span>
+      </button>
+      <button 
+        (click)="openTransferModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">sync_alt</mat-icon>
+        <span class="text-sm font-medium">Transfer</span>
+      </button>
+      <button 
+        (click)="openScheduleModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">event</mat-icon>
+        <span class="text-sm font-medium">Schedule</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-600">
+      <h3 class="text-lg font-semibold">Transaction History</h3>
+    </div>
+
+    <div *ngIf="loading$ | async" class="flex justify-center py-8">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+
+    <div *ngIf="!(loading$ | async)">
+      <app-transaction-table 
+        [transactions]="transactions$ | async" 
+        [showPaginator]="true"
+        [showAccountInfo]="true">
+      </app-transaction-table>
+    </div>
+  </div>
+</div>

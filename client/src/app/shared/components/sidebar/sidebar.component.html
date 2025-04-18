@@ -1,0 +1,71 @@
+<aside class="w-64 h-full bg-white dark:bg-neutral-700 shadow-md flex flex-col">
+  <div class="p-4 border-b border-neutral-200 dark:border-neutral-600 flex items-center space-x-2">
+    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+      O
+    </div>
+    <h1 class="text-xl font-semibold">Optio Bank Sim</h1>
+  </div>
+  
+  <nav class="flex-1 overflow-y-auto py-4">
+    <div class="px-4 mb-2 text-neutral-500 dark:text-neutral-300 text-sm font-medium">
+      BANKING
+    </div>
+    <a 
+      routerLink="/dashboard" 
+      [ngClass]="isActive('/dashboard') ? 'sidebar-link active flex items-center px-4 py-2 text-primary' : 'sidebar-link flex items-center px-4 py-2 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-600'"
+    >
+      <mat-icon class="h-5 w-5 mr-3">home</mat-icon>
+      Dashboard
+    </a>
+    <a 
+      routerLink="/accounts" 
+      [ngClass]="isActive('/accounts') ? 'sidebar-link active flex items-center px-4 py-2 text-primary' : 'sidebar-link flex items-center px-4 py-2 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-600'"
+    >
+      <mat-icon class="h-5 w-5 mr-3">credit_card</mat-icon>
+      Accounts
+    </a>
+    <a 
+      routerLink="/transactions" 
+      [ngClass]="isActive('/transactions') ? 'sidebar-link active flex items-center px-4 py-2 text-primary' : 'sidebar-link flex items-center px-4 py-2 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-600'"
+    >
+      <mat-icon class="h-5 w-5 mr-3">sync_alt</mat-icon>
+      Transactions
+    </a>
+    <a 
+      routerLink="/loans" 
+      [ngClass]="isActive('/loans') ? 'sidebar-link active flex items-center px-4 py-2 text-primary' : 'sidebar-link flex items-center px-4 py-2 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-600'"
+    >
+      <mat-icon class="h-5 w-5 mr-3">attach_money</mat-icon>
+      Loans
+    </a>
+    
+    <div class="px-4 mt-6 mb-2 text-neutral-500 dark:text-neutral-300 text-sm font-medium">
+      SYSTEM
+    </div>
+    <a 
+      routerLink="/events" 
+      [ngClass]="isActive('/events') ? 'sidebar-link active flex items-center px-4 py-2 text-primary' : 'sidebar-link flex items-center px-4 py-2 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-600'"
+    >
+      <mat-icon class="h-5 w-5 mr-3">receipt_long</mat-icon>
+      Event Feed
+    </a>
+    <a 
+      routerLink="/admin" 
+      [ngClass]="isActive('/admin') ? 'sidebar-link active flex items-center px-4 py-2 text-primary' : 'sidebar-link flex items-center px-4 py-2 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-600'"
+    >
+      <mat-icon class="h-5 w-5 mr-3">settings</mat-icon>
+      Admin
+    </a>
+  </nav>
+  
+  <div class="p-4 border-t border-neutral-200 dark:border-neutral-600">
+    <div class="flex items-center justify-between">
+      <span class="text-sm text-neutral-600 dark:text-neutral-300">Optio Sync</span>
+      <mat-slide-toggle 
+        color="primary" 
+        [checked]="optioSyncEnabled$ | async" 
+        (change)="toggleOptioSync($event)">
+      </mat-slide-toggle>
+    </div>
+  </div>
+</aside>

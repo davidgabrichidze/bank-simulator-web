@@ -1,0 +1,78 @@
+<div class="p-6">
+  <h2 mat-dialog-title class="text-lg font-semibold mb-4">Transfer Funds</h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="transferForm">
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>From Account</mat-label>
+        <mat-select formControlName="sourceAccountId">
+          <mat-option *ngFor="let account of accounts$ | async" [value]="account.id" [disabled]="!account.isActive">
+            {{ account.name }} ({{ account.accountNumber }}) - {{ account.balance | currency:account.currency }}
+            <span *ngIf="!account.isActive" class="text-error ml-2">(Closed)</span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="transferForm.get('sourceAccountId')?.hasError('required')">
+          Source account is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>To Account</mat-label>
+        <mat-select formControlName="targetAccountId">
+          <mat-option *ngFor="let account of accounts$ | async" 
+            [value]="account.id" 
+            [disabled]="!account.isActive || account.id === transferForm.get('sourceAccountId')?.value">
+            {{ account.name }} ({{ account.accountNumber }})
+            <span *ngIf="!account.isActive" class="text-error ml-2">(Closed)</span>
+            <span *ngIf="account.id === transferForm.get('sourceAccountId')?.value" class="text-error ml-2">(Same Account)</span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="transferForm.get('targetAccountId')?.hasError('required')">
+          Target account is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Amount</mat-label>
+        <span matPrefix>$&nbsp;</span>
+        <input matInput type="number" formControlName="amount" min="0.01" step="0.01" placeholder="0.00">
+        <mat-error *ngIf="transferForm.get('amount')?.hasError('required')">
+          Amount is required
+        </mat-error>
+        <mat-error *ngIf="transferForm.get('amount')?.hasError('min')">
+          Amount must be greater than 0
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency">
+          <mat-option value="USD">USD</mat-option>
+          <mat-option value="EUR">EUR</mat-option>
+          <mat-option value="GBP">GBP</mat-option>
+        </mat-select>
+        <mat-error *ngIf="transferForm.get('currency')?.hasError('required')">
+          Currency is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Description (Optional)</mat-label>
+        <input matInput formControlName="description" placeholder="Enter description">
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button 
+      mat-raised-button 
+      color="accent" 
+      (click)="onSubmit()"
+      [disabled]="transferForm.invalid || (loading$ | async)"
+    >
+      <mat-spinner *ngIf="loading$ | async" diameter="20" class="mr-2"></mat-spinner>
+      Confirm Transfer
+    </button>
+  </mat-dialog-actions>
+</div>

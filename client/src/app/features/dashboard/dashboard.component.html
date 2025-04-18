@@ -1,0 +1,181 @@
+<div>
+  <!-- Dashboard Overview Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+    <!-- Account Summary Card -->
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Accounts</h3>
+        <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">{{ (accountSummary$ | async)?.total || 0 }} Active</span>
+      </div>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-neutral-600 dark:text-neutral-300">Personal</span>
+          <span class="font-medium">{{ (accountSummary$ | async)?.personal || 0 }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-neutral-600 dark:text-neutral-300">Business</span>
+          <span class="font-medium">{{ (accountSummary$ | async)?.business || 0 }}</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-600">
+        <button mat-button color="primary" routerLink="/accounts/new" class="text-primary text-sm font-medium flex items-center">
+          <mat-icon class="h-4 w-4 mr-1">add</mat-icon>
+          Create New Account
+        </button>
+      </div>
+    </div>
+
+    <!-- Recent Transactions Card -->
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Recent Activity</h3>
+        <span class="text-xs px-2 py-1 bg-success/10 text-success rounded-full">{{ (recentTransactions$ | async)?.length || 0 }} New</span>
+      </div>
+      <div class="space-y-3" *ngIf="(recentTransactions$ | async)?.length; else noTransactions">
+        <div class="flex justify-between items-center" *ngFor="let transaction of (recentTransactions$ | async)?.slice(0, 3)">
+          <span class="text-neutral-600 dark:text-neutral-300">{{ transaction.type | titlecase }}</span>
+          <span [ngClass]="transaction.type === 'deposit' ? 'font-medium text-success' : 'font-medium text-error'">
+            {{ transaction.type === 'deposit' ? '+' : '-' }}{{ transaction.amount | currency:transaction.currency }}
+          </span>
+        </div>
+      </div>
+      <ng-template #noTransactions>
+        <div class="text-center py-2 text-neutral-500">
+          No recent transactions
+        </div>
+      </ng-template>
+      <div class="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-600">
+        <button mat-button color="primary" routerLink="/transactions" class="text-primary text-sm font-medium flex items-center">
+          <mat-icon class="h-4 w-4 mr-1">arrow_forward</mat-icon>
+          View All Transactions
+        </button>
+      </div>
+    </div>
+
+    <!-- Optio Sync Status Card -->
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Optio Sync</h3>
+        <span 
+          [ngClass]="(optioSyncEnabled$ | async) ? 'text-xs px-2 py-1 bg-success/10 text-success rounded-full' : 'text-xs px-2 py-1 bg-error/10 text-error rounded-full'"
+        >
+          {{ (optioSyncEnabled$ | async) ? 'Connected' : 'Disconnected' }}
+        </span>
+      </div>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-neutral-600 dark:text-neutral-300">Last Sync</span>
+          <span class="font-medium">{{ (recentEvents$ | async)?.length ? ((recentEvents$ | async)[0].createdAt | date:'shortTime') : 'Never' }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-neutral-600 dark:text-neutral-300">Events Today</span>
+          <span class="font-medium">{{ (recentEvents$ | async)?.length || 0 }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-neutral-600 dark:text-neutral-300">Status</span>
+          <span class="font-medium text-success" *ngIf="optioSyncEnabled$ | async">200 OK</span>
+          <span class="font-medium text-error" *ngIf="!(optioSyncEnabled$ | async)">Disabled</span>
+        </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-600">
+        <button mat-button color="primary" routerLink="/admin" class="text-primary text-sm font-medium flex items-center">
+          <mat-icon class="h-4 w-4 mr-1">sync</mat-icon>
+          View API Logs
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5 mb-6">
+    <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button 
+        (click)="openDepositModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">add_circle</mat-icon>
+        <span class="text-sm font-medium">Deposit</span>
+      </button>
+      <button 
+        (click)="openWithdrawModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">remove_circle</mat-icon>
+        <span class="text-sm font-medium">Withdraw</span>
+      </button>
+      <button 
+        (click)="openTransferModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">sync_alt</mat-icon>
+        <span class="text-sm font-medium">Transfer</span>
+      </button>
+      <button 
+        (click)="openScheduleModal()"
+        class="flex flex-col items-center justify-center p-4 rounded-lg bg-neutral-100 dark:bg-neutral-600 hover:bg-primary/10"
+      >
+        <mat-icon class="h-8 w-8 text-primary mb-2">event</mat-icon>
+        <span class="text-sm font-medium">Schedule</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Account Overview Section -->
+  <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm mb-6 overflow-hidden">
+    <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-600">
+      <h3 class="text-lg font-semibold">Account Overview</h3>
+    </div>
+
+    <div class="p-2">
+      <!-- Account Tabs -->
+      <div class="border-b border-neutral-200 dark:border-neutral-600">
+        <mat-tab-group (selectedIndexChange)="setActiveAccount($event)">
+          <mat-tab label="Personal Checking"></mat-tab>
+          <mat-tab label="Savings"></mat-tab>
+          <mat-tab label="Business"></mat-tab>
+        </mat-tab-group>
+      </div>
+
+      <!-- Account Details -->
+      <div class="p-4">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+          <div>
+            <h4 class="text-xl font-medium">Personal Checking</h4>
+            <p class="text-neutral-500 dark:text-neutral-400 text-sm">Account #: 1234-5678-9000</p>
+          </div>
+          <div class="mt-3 md:mt-0">
+            <div class="text-3xl font-semibold">$4,285.75</div>
+            <p class="text-neutral-500 dark:text-neutral-400 text-sm text-right">Available Balance</p>
+          </div>
+        </div>
+
+        <!-- Transaction History -->
+        <app-transaction-table 
+          [transactions]="recentTransactions$ | async" 
+          [showPaginator]="true">
+        </app-transaction-table>
+        
+        <div class="mt-4 flex justify-center">
+          <button mat-button color="primary" class="text-primary text-sm font-medium flex items-center">
+            <mat-icon class="h-4 w-4 mr-1">expand_more</mat-icon>
+            Load More Transactions
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Feed Section -->
+  <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-600 flex justify-between items-center">
+      <h3 class="text-lg font-semibold">Event Feed & Audit</h3>
+      <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">Real-time</span>
+    </div>
+
+    <app-event-feed 
+      [events]="recentEvents$ | async" 
+      [showPaginator]="true">
+    </app-event-feed>
+  </div>
+</div>

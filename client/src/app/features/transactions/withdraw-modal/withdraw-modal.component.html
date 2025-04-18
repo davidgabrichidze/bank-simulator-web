@@ -1,0 +1,62 @@
+<div class="p-6">
+  <h2 mat-dialog-title class="text-lg font-semibold mb-4">Withdraw Funds</h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="withdrawForm">
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Select Account</mat-label>
+        <mat-select formControlName="accountId">
+          <mat-option *ngFor="let account of accounts$ | async" [value]="account.id" [disabled]="!account.isActive">
+            {{ account.name }} ({{ account.accountNumber }}) - {{ account.balance | currency:account.currency }}
+            <span *ngIf="!account.isActive" class="text-error ml-2">(Closed)</span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="withdrawForm.get('accountId')?.hasError('required')">
+          Account is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Amount</mat-label>
+        <span matPrefix>$&nbsp;</span>
+        <input matInput type="number" formControlName="amount" min="0.01" step="0.01" placeholder="0.00">
+        <mat-error *ngIf="withdrawForm.get('amount')?.hasError('required')">
+          Amount is required
+        </mat-error>
+        <mat-error *ngIf="withdrawForm.get('amount')?.hasError('min')">
+          Amount must be greater than 0
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency">
+          <mat-option value="USD">USD</mat-option>
+          <mat-option value="EUR">EUR</mat-option>
+          <mat-option value="GBP">GBP</mat-option>
+        </mat-select>
+        <mat-error *ngIf="withdrawForm.get('currency')?.hasError('required')">
+          Currency is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Description (Optional)</mat-label>
+        <input matInput formControlName="description" placeholder="Enter description">
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button 
+      mat-raised-button 
+      color="warn" 
+      (click)="onSubmit()"
+      [disabled]="withdrawForm.invalid || (loading$ | async)"
+    >
+      <mat-spinner *ngIf="loading$ | async" diameter="20" class="mr-2"></mat-spinner>
+      Confirm Withdrawal
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,108 @@
+<div class="p-6">
+  <h2 mat-dialog-title class="text-lg font-semibold mb-4">Schedule Payment</h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="scheduleForm">
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>From Account</mat-label>
+        <mat-select formControlName="accountId">
+          <mat-option *ngFor="let account of accounts$ | async" [value]="account.id" [disabled]="!account.isActive">
+            {{ account.name }} ({{ account.accountNumber }}) - {{ account.balance | currency:account.currency }}
+            <span *ngIf="!account.isActive" class="text-error ml-2">(Closed)</span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="scheduleForm.get('accountId')?.hasError('required')">
+          Source account is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>To Account (Optional)</mat-label>
+        <mat-select formControlName="targetAccountId">
+          <mat-option [value]="null">No target account (external payment)</mat-option>
+          <mat-option *ngFor="let account of accounts$ | async" 
+            [value]="account.id" 
+            [disabled]="!account.isActive || account.id === scheduleForm.get('accountId')?.value">
+            {{ account.name }} ({{ account.accountNumber }})
+            <span *ngIf="!account.isActive" class="text-error ml-2">(Closed)</span>
+            <span *ngIf="account.id === scheduleForm.get('accountId')?.value" class="text-error ml-2">(Same Account)</span>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Amount</mat-label>
+        <span matPrefix>$&nbsp;</span>
+        <input matInput type="number" formControlName="amount" min="0.01" step="0.01" placeholder="0.00">
+        <mat-error *ngIf="scheduleForm.get('amount')?.hasError('required')">
+          Amount is required
+        </mat-error>
+        <mat-error *ngIf="scheduleForm.get('amount')?.hasError('min')">
+          Amount must be greater than 0
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency">
+          <mat-option value="USD">USD</mat-option>
+          <mat-option value="EUR">EUR</mat-option>
+          <mat-option value="GBP">GBP</mat-option>
+        </mat-select>
+        <mat-error *ngIf="scheduleForm.get('currency')?.hasError('required')">
+          Currency is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Frequency</mat-label>
+        <mat-select formControlName="frequency">
+          <mat-option *ngFor="let option of frequencyOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="scheduleForm.get('frequency')?.hasError('required')">
+          Frequency is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" formControlName="nextPaymentDate">
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+        <mat-error *ngIf="scheduleForm.get('nextPaymentDate')?.hasError('required')">
+          Start date is required
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field *ngIf="showEndDate" appearance="outline" class="w-full mb-4">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+        <mat-error *ngIf="scheduleForm.get('endDate')?.hasError('required')">
+          End date is required for recurring payments
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="w-full mb-4">
+        <mat-label>Description (Optional)</mat-label>
+        <input matInput formControlName="description" placeholder="Enter description">
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="onSubmit()"
+      [disabled]="scheduleForm.invalid || (loading$ | async)"
+    >
+      <mat-spinner *ngIf="loading$ | async" diameter="20" class="mr-2"></mat-spinner>
+      Schedule Payment
+    </button>
+  </mat-dialog-actions>
+</div>

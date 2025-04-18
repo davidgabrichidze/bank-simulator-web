@@ -1,0 +1,115 @@
+<div class="container mx-auto p-4">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold">Admin</h2>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Optio API Sync Card -->
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5">
+      <h3 class="text-lg font-semibold mb-4">Optio API Sync</h3>
+      
+      <div class="space-y-4">
+        <div class="flex justify-between items-center">
+          <span class="text-neutral-600 dark:text-neutral-300">Sync Status</span>
+          <mat-slide-toggle 
+            color="primary" 
+            [checked]="optioSyncEnabled$ | async"
+            (change)="toggleOptioSync($event.checked)"
+            [disabled]="loading$ | async"
+          ></mat-slide-toggle>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 mb-2">Last API Request</p>
+          <div *ngIf="lastApiRequest$ | async; else noRequest" class="bg-neutral-50 dark:bg-neutral-600 p-3 rounded-lg overflow-x-auto">
+            <pre class="text-sm font-mono">{{ formatJson(lastApiRequest$ | async) }}</pre>
+          </div>
+          <ng-template #noRequest>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 italic">No recent API requests</p>
+          </ng-template>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 mb-2">Last API Response</p>
+          <div *ngIf="lastApiResponse$ | async; else noResponse" class="bg-neutral-50 dark:bg-neutral-600 p-3 rounded-lg overflow-x-auto">
+            <pre class="text-sm font-mono">{{ formatJson(lastApiResponse$ | async) }}</pre>
+          </div>
+          <ng-template #noResponse>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 italic">No recent API responses</p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Settings Card -->
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm p-5">
+      <h3 class="text-lg font-semibold mb-4">System Settings</h3>
+      
+      <div class="space-y-4">
+        <div *ngIf="settings$ | async as settings">
+          <p class="text-neutral-500 dark:text-neutral-400 mb-2">Database Configuration</p>
+          <div class="bg-neutral-50 dark:bg-neutral-600 p-3 rounded-lg">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm">Database Type</span>
+              <span class="text-sm font-medium">SQLite</span>
+            </div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm">Version</span>
+              <span class="text-sm font-medium">{{ settings['dbVersion'] || '1.0.0' }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm">Last Reset</span>
+              <span class="text-sm font-medium">{{ settings['lastDbReset'] || 'Never' }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <p class="text-neutral-500 dark:text-neutral-400 mb-2">Optio Integration</p>
+          <div class="bg-neutral-50 dark:bg-neutral-600 p-3 rounded-lg">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm">API Endpoint</span>
+              <span class="text-sm font-medium">/v1/banking-events</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm">Auth Method</span>
+              <span class="text-sm font-medium">JWT</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="pt-4">
+          <button 
+            mat-raised-button 
+            color="warn" 
+            (click)="resetDatabase()"
+            [disabled]="loading$ | async"
+            class="w-full"
+          >
+            <mat-icon>restore</mat-icon>
+            Reset Database
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Feed & Audit -->
+  <div class="bg-white dark:bg-neutral-700 rounded-lg shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-600 flex justify-between items-center">
+      <h3 class="text-lg font-semibold">Event Feed & Audit</h3>
+      <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">Real-time</span>
+    </div>
+
+    <div *ngIf="loading$ | async" class="flex justify-center py-8">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+
+    <div *ngIf="!(loading$ | async)">
+      <app-event-feed 
+        [events]="events$ | async" 
+        [showPaginator]="true">
+      </app-event-feed>
+    </div>
+  </div>
+</div>
