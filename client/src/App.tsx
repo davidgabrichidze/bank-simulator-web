@@ -11,6 +11,7 @@ import LoansPage from "@/pages/loans";
 import EventsPage from "@/pages/events";
 import AdminPage from "@/pages/admin";
 import ClientsPage from "@/pages/clients";
+import ClientDetailsPage from "@/pages/clients/details";
 import SimulatorPage from "@/pages/simulator";
 import GeneratorPage from "@/pages/generator";
 
@@ -20,6 +21,7 @@ function Router() {
       {/* Main pages */}
       <Route path="/" component={Dashboard}/>
       <Route path="/clients" component={ClientsPage}/>
+      <Route path="/clients/:id" component={ClientDetailsPage}/>
       <Route path="/accounts" component={AccountsPage}/>
       <Route path="/transactions" component={TransactionsPage}/>
       <Route path="/loans" component={LoansPage}/>

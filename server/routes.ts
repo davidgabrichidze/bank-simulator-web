@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertClientSchema } from "@shared/schema";
+import { insertClientSchema, insertAccountSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Client routes
@@ -94,6 +94,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching accounts:", error);
       res.status(500).json({ success: false, message: "Failed to fetch accounts" });
+    }
+  });
+  
+  app.post("/api/accounts", async (req, res) => {
+    try {
+      const result = insertAccountSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid account data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const account = await storage.createAccount(result.data);
+      res.status(201).json({ success: true, data: account });
+    } catch (error) {
+      console.error("Error creating account:", error);
+      res.status(500).json({ success: false, message: "Failed to create account" });
     }
   });
   

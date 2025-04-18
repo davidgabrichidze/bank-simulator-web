@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import AccountFormDialog from "@/components/ui/account-form-dialog";
 
 // Define types
 interface Client {
@@ -269,10 +270,10 @@ export default function ClientDetailsPage() {
                   <CardTitle>Accounts</CardTitle>
                   <CardDescription>Bank accounts owned by this client</CardDescription>
                 </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Account
-                </Button>
+                <AccountFormDialog 
+                clientId={client.id} 
+                clientName={clientName} 
+              />
               </CardHeader>
               <CardContent>
                 {isLoadingAccounts ? (
@@ -286,7 +287,11 @@ export default function ClientDetailsPage() {
                     <p className="text-sm text-muted-foreground mb-4 max-w-md">
                       This client does not have any accounts yet. Create an account to enable banking services.
                     </p>
-                    <Button>Create Account</Button>
+                    <AccountFormDialog 
+                      clientId={client.id} 
+                      clientName={clientName} 
+                      trigger={<Button>Create Account</Button>}
+                    />
                   </div>
                 ) : (
                   <div className="grid gap-4">
