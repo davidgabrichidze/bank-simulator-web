@@ -9,6 +9,9 @@ import {
   Bell,
   Settings,
   LogOut,
+  Users,
+  Smartphone,
+  BarChart3,
 } from "lucide-react";
 
 interface SidebarLinkProps {
@@ -65,43 +68,76 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex flex-1">
         <aside className="hidden w-64 flex-col border-r bg-muted/40 md:flex">
           <nav className="flex-1 overflow-auto py-6 px-4">
-            <div className="space-y-1.5">
-              <SidebarLink
-                href="/"
-                icon={<LayoutDashboard className="h-4 w-4" />}
-                label="Dashboard"
-                isActive={location === "/"}
-              />
-              <SidebarLink
-                href="/accounts"
-                icon={<CreditCard className="h-4 w-4" />}
-                label="Accounts"
-                isActive={location.startsWith("/accounts")}
-              />
-              <SidebarLink
-                href="/transactions"
-                icon={<ArrowRightLeft className="h-4 w-4" />}
-                label="Transactions"
-                isActive={location.startsWith("/transactions")}
-              />
-              <SidebarLink
-                href="/loans"
-                icon={<Receipt className="h-4 w-4" />}
-                label="Loans"
-                isActive={location.startsWith("/loans")}
-              />
-              <SidebarLink
-                href="/events"
-                icon={<Bell className="h-4 w-4" />}
-                label="Events"
-                isActive={location.startsWith("/events")}
-              />
-              <SidebarLink
-                href="/admin"
-                icon={<Settings className="h-4 w-4" />}
-                label="Admin"
-                isActive={location.startsWith("/admin")}
-              />
+            <div className="mb-4">
+              <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground">GENERAL</h3>
+              <div className="space-y-1.5">
+                <SidebarLink
+                  href="/"
+                  icon={<LayoutDashboard className="h-4 w-4" />}
+                  label="Dashboard"
+                  isActive={location === "/"}
+                />
+                <SidebarLink
+                  href="/clients"
+                  icon={<Users className="h-4 w-4" />}
+                  label="Clients"
+                  isActive={location.startsWith("/clients")}
+                />
+                <SidebarLink
+                  href="/accounts"
+                  icon={<CreditCard className="h-4 w-4" />}
+                  label="Accounts"
+                  isActive={location.startsWith("/accounts")}
+                />
+                <SidebarLink
+                  href="/transactions"
+                  icon={<ArrowRightLeft className="h-4 w-4" />}
+                  label="Transactions"
+                  isActive={location.startsWith("/transactions")}
+                />
+                <SidebarLink
+                  href="/loans"
+                  icon={<Receipt className="h-4 w-4" />}
+                  label="Loans"
+                  isActive={location.startsWith("/loans")}
+                />
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground">SIMULATORS</h3>
+              <div className="space-y-1.5">
+                <SidebarLink
+                  href="/simulator"
+                  icon={<Smartphone className="h-4 w-4" />}
+                  label="Digital Channels"
+                  isActive={location.startsWith("/simulator")}
+                />
+                <SidebarLink
+                  href="/generator"
+                  icon={<BarChart3 className="h-4 w-4" />}
+                  label="Bulk Generator"
+                  isActive={location.startsWith("/generator")}
+                />
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground">SYSTEM</h3>
+              <div className="space-y-1.5">
+                <SidebarLink
+                  href="/events"
+                  icon={<Bell className="h-4 w-4" />}
+                  label="Events"
+                  isActive={location.startsWith("/events")}
+                />
+                <SidebarLink
+                  href="/admin"
+                  icon={<Settings className="h-4 w-4" />}
+                  label="Admin"
+                  isActive={location.startsWith("/admin")}
+                />
+              </div>
             </div>
           </nav>
           <div className="mt-auto p-4">
