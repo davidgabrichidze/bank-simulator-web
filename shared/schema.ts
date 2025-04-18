@@ -1,10 +1,32 @@
-import { pgTable, text, serial, integer, boolean, doublePrecision, timestamp, varchar, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, doublePrecision, timestamp, varchar, decimal, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
+
+// Client
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 20 }).notNull(), // person, business
+  name: varchar("name", { length: 100 }).notNull(),
+  identifier: varchar("identifier", { length: 50 }).notNull().unique(), // SSN for persons, business ID for businesses
+  email: varchar("email", { length: 100 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  address: text("address"),
+  businessName: varchar("business_name", { length: 100 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertClientSchema = createInsertSchema(clients).omit({ 
+  id: true,
+  createdAt: true,
+  updatedAt: true 
+});
 
 // Account
 export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clients.id),
   accountNumber: varchar("account_number", { length: 20 }).notNull().unique(),
   name: varchar("name", { length: 100 }).notNull(),
   type: varchar("type", { length: 20 }).notNull(), // personal, business
@@ -148,5 +170,37 @@ export type InsertLoanPayment = z.infer<typeof insertLoanPaymentSchema>;
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 
+// User
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 100 }).notNull(),
+  email: varchar("email", { length: 100 }).notNull(),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ 
+  id: true,
+  createdAt: true 
+});
+
+// Define relations
+export const accountsRelations = relations(accounts, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [accounts.id],
+    references: [clients.id],
+  }),
+  transactions: many(transactions),
+  scheduledPayments: many(scheduledPayments),
+  loans: many(loans),
+}));
+
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
+
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
