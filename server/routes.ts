@@ -1,15 +1,173 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { z } from "zod";
+import { insertClientSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  // Client routes
+  app.get("/api/clients", async (req, res) => {
+    try {
+      const clients = await storage.getClients();
+      res.json({ success: true, data: clients });
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch clients" });
+    }
+  });
+  
+  app.get("/api/clients/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ success: false, message: "Client not found" });
+      }
+      
+      res.json({ success: true, data: client });
+    } catch (error) {
+      console.error("Error fetching client:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch client" });
+    }
+  });
+  
+  app.post("/api/clients", async (req, res) => {
+    try {
+      const result = insertClientSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid client data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const client = await storage.createClient(result.data);
+      res.status(201).json({ success: true, data: client });
+    } catch (error) {
+      console.error("Error creating client:", error);
+      res.status(500).json({ success: false, message: "Failed to create client" });
+    }
+  });
+  
+  app.put("/api/clients/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ success: false, message: "Client not found" });
+      }
+      
+      // Validate update data
+      const updateSchema = insertClientSchema.partial();
+      const result = updateSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid client data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const updatedClient = await storage.updateClient(id, result.data);
+      res.json({ success: true, data: updatedClient });
+    } catch (error) {
+      console.error("Error updating client:", error);
+      res.status(500).json({ success: false, message: "Failed to update client" });
+    }
+  });
+  
+  // Account routes
+  app.get("/api/accounts", async (req, res) => {
+    try {
+      const accounts = await storage.getAccounts();
+      res.json({ success: true, data: accounts });
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch accounts" });
+    }
+  });
+  
+  app.get("/api/clients/:clientId/accounts", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: "Client not found" });
+      }
+      
+      const accounts = await storage.getAccountsByClientId(clientId);
+      res.json({ success: true, data: accounts });
+    } catch (error) {
+      console.error("Error fetching client accounts:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch client accounts" });
+    }
+  });
+  
+  // Events routes
+  app.get("/api/events", async (req, res) => {
+    try {
+      const events = await storage.getEvents();
+      res.json({ success: true, data: events });
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch events" });
+    }
+  });
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  // Settings routes
+  app.get("/api/settings", async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json({ success: true, data: settings });
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch settings" });
+    }
+  });
+  
+  app.post("/api/settings", async (req, res) => {
+    try {
+      const { key, value } = req.body;
+      
+      if (!key || typeof key !== 'string' || typeof value !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid setting data. Both key and value must be provided as strings." 
+        });
+      }
+      
+      const setting = await storage.updateSetting(key, value);
+      res.json({ success: true, data: setting });
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      res.status(500).json({ success: false, message: "Failed to update setting" });
+    }
+  });
+
+  // Register error handler middleware
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    console.error("Global error handler caught:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "An unexpected error occurred", 
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+    });
+  });
 
   const httpServer = createServer(app);
-
   return httpServer;
 }

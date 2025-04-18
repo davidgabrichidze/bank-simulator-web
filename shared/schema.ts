@@ -186,14 +186,44 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 // Define relations
+export const clientsRelations = relations(clients, ({ many }) => ({
+  accounts: many(accounts),
+}));
+
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
   client: one(clients, {
-    fields: [accounts.id],
+    fields: [accounts.clientId],
     references: [clients.id],
   }),
   transactions: many(transactions),
   scheduledPayments: many(scheduledPayments),
   loans: many(loans),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  account: one(accounts, {
+    fields: [transactions.accountId],
+    references: [accounts.id],
+  }),
+  targetAccount: one(accounts, {
+    fields: [transactions.targetAccountId],
+    references: [accounts.id],
+  }),
+}));
+
+export const loansRelations = relations(loans, ({ one, many }) => ({
+  account: one(accounts, {
+    fields: [loans.accountId],
+    references: [accounts.id],
+  }),
+  payments: many(loanPayments),
+}));
+
+export const loanPaymentsRelations = relations(loanPayments, ({ one }) => ({
+  loan: one(loans, {
+    fields: [loanPayments.loanId],
+    references: [loans.id],
+  }),
 }));
 
 export type Setting = typeof settings.$inferSelect;

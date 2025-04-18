@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,8 @@ import {
   User,
   CreditCard, 
   Receipt, 
-  PiggyBank 
+  PiggyBank,
+  Loader2 
 } from "lucide-react";
 import {
   Dialog,
@@ -31,6 +32,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 // Define client types
 interface Client {
@@ -39,14 +42,28 @@ interface Client {
   name: string;
   identifier: string; // SSN for persons, business ID for businesses
   email: string;
-  phone: string;
+  phone?: string;
+  address?: string;
+  businessName?: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+interface CreateClientData {
+  type: 'person' | 'business';
+  name: string;
+  identifier: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  businessName?: string;
 }
 
 export default function ClientsPage() {
   const [open, setOpen] = useState(false);
   const [clientType, setClientType] = useState<'person' | 'business'>('person');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Form state
   const [name, setName] = useState("");
@@ -56,8 +73,16 @@ export default function ClientsPage() {
   const [address, setAddress] = useState("");
   const [businessName, setBusinessName] = useState("");
   
-  // Sample data - in a real app, this would come from an API
-  const clients: Client[] = [];
+  // Fetch clients
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['/api/clients'],
+    queryFn: async () => {
+      const response = await apiRequest<{ success: boolean, data: Client[] }>('/api/clients');
+      return response.data;
+    }
+  });
+  
+  const clients = data || [];
   
   const handleCreateClient = (e: React.FormEvent) => {
     e.preventDefault();
