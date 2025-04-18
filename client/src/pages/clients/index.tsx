@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -356,7 +357,9 @@ export default function ClientsPage() {
                         {client.phone && <div>{client.phone}</div>}
                         {client.address && <div className="truncate max-w-[200px]">{client.address}</div>}
                       </div>
-                      <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
+                      <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                          <Link href={`/clients/${client.id}`}>View Details</Link>
+                        </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -415,7 +418,9 @@ export default function ClientsPage() {
                           {client.phone && <div>{client.phone}</div>}
                           {client.address && <div className="truncate max-w-[200px]">{client.address}</div>}
                         </div>
-                        <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
+                        <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                          <Link href={`/clients/${client.id}`}>View Details</Link>
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}
@@ -474,7 +479,9 @@ export default function ClientsPage() {
                           {client.phone && <div>{client.phone}</div>}
                           {client.address && <div className="truncate max-w-[200px]">{client.address}</div>}
                         </div>
-                        <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
+                        <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                          <Link href={`/clients/${client.id}`}>View Details</Link>
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}
