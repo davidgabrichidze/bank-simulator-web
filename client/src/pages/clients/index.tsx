@@ -298,7 +298,26 @@ export default function ClientsPage() {
           </TabsList>
           
           <TabsContent value="all" className="space-y-4">
-            {clients.length === 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : isError ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className="rounded-full bg-red-100 dark:bg-red-900 p-3">
+                    <div className="h-8 w-8 text-red-600 dark:text-red-300">!</div>
+                  </div>
+                  <h3 className="mt-3 text-lg font-medium">Error Loading Clients</h3>
+                  <p className="mt-1 text-sm text-muted-foreground max-w-md">
+                    There was an error loading client data. Please try again later.
+                  </p>
+                  <Button className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/clients'] })}>
+                    Retry
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : clients.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center p-6 text-center">
                   <div className="rounded-full bg-muted p-3">
@@ -314,104 +333,153 @@ export default function ClientsPage() {
               </Card>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {/* Client cards would go here */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-medium">John Doe</CardTitle>
-                      <div className="bg-primary/10 text-primary text-xs rounded-full px-2 py-1">Person</div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground mb-4">
-                      <div>ID: XXX-XX-1234</div>
-                      <div>john.doe@example.com</div>
-                      <div>(555) 123-4567</div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="text-xs bg-muted rounded-full px-2 py-1 flex items-center">
-                        <CreditCard className="w-3 h-3 mr-1" /> 2 Cards
+                {clients.map(client => (
+                  <Card key={client.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base font-medium">
+                          {client.type === 'business' && client.businessName ? client.businessName : client.name}
+                        </CardTitle>
+                        <div className={`text-xs rounded-full px-2 py-1 ${
+                          client.type === 'person' 
+                            ? 'bg-primary/10 text-primary' 
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                        }`}>
+                          {client.type === 'person' ? 'Person' : 'Business'}
+                        </div>
                       </div>
-                      <div className="text-xs bg-muted rounded-full px-2 py-1 flex items-center">
-                        <PiggyBank className="w-3 h-3 mr-1" /> 1 Account
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm text-muted-foreground mb-4">
+                        <div>ID: {client.identifier}</div>
+                        <div>{client.email}</div>
+                        {client.phone && <div>{client.phone}</div>}
+                        {client.address && <div className="truncate max-w-[200px]">{client.address}</div>}
                       </div>
-                      <div className="text-xs bg-muted rounded-full px-2 py-1 flex items-center">
-                        <Receipt className="w-3 h-3 mr-1" /> 1 Loan
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-medium">Acme Inc.</CardTitle>
-                      <div className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs rounded-full px-2 py-1">Business</div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground mb-4">
-                      <div>ID: B98765432</div>
-                      <div>contact@acme.com</div>
-                      <div>(555) 987-6543</div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="text-xs bg-muted rounded-full px-2 py-1 flex items-center">
-                        <CreditCard className="w-3 h-3 mr-1" /> 3 Cards
-                      </div>
-                      <div className="text-xs bg-muted rounded-full px-2 py-1 flex items-center">
-                        <PiggyBank className="w-3 h-3 mr-1" /> 2 Accounts
-                      </div>
-                      <div className="text-xs bg-muted rounded-full px-2 py-1 flex items-center">
-                        <Receipt className="w-3 h-3 mr-1" /> 0 Loans
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
-                  </CardContent>
-                </Card>
+                      <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </TabsContent>
           
           <TabsContent value="persons" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Persons</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center p-6 text-center">
-                  <div className="rounded-full bg-muted p-3">
-                    <User className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="mt-3 text-lg font-medium">No person clients yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-md">
-                    Create your first person client.
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : isError ? (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-lg font-medium">Error Loading Person Clients</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    There was an error loading client data.
                   </p>
-                  <Button className="mt-4" onClick={() => {setClientType('person'); setOpen(true);}}>Create Person</Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : clients.filter(client => client.type === 'person').length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Persons</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                    <div className="rounded-full bg-muted p-3">
+                      <User className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-3 text-lg font-medium">No person clients yet</h3>
+                    <p className="mt-1 text-sm text-muted-foreground max-w-md">
+                      Create your first person client.
+                    </p>
+                    <Button className="mt-4" onClick={() => {setClientType('person'); setOpen(true);}}>Create Person</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {clients
+                  .filter(client => client.type === 'person')
+                  .map(client => (
+                    <Card key={client.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base font-medium">{client.name}</CardTitle>
+                          <div className="bg-primary/10 text-primary text-xs rounded-full px-2 py-1">Person</div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm text-muted-foreground mb-4">
+                          <div>ID: {client.identifier}</div>
+                          <div>{client.email}</div>
+                          {client.phone && <div>{client.phone}</div>}
+                          {client.address && <div className="truncate max-w-[200px]">{client.address}</div>}
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="businesses" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Businesses</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center p-6 text-center">
-                  <div className="rounded-full bg-muted p-3">
-                    <Building2 className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="mt-3 text-lg font-medium">No business clients yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-md">
-                    Create your first business client.
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : isError ? (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-lg font-medium">Error Loading Business Clients</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    There was an error loading client data.
                   </p>
-                  <Button className="mt-4" onClick={() => {setClientType('business'); setOpen(true);}}>Create Business</Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : clients.filter(client => client.type === 'business').length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Businesses</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                    <div className="rounded-full bg-muted p-3">
+                      <Building2 className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="mt-3 text-lg font-medium">No business clients yet</h3>
+                    <p className="mt-1 text-sm text-muted-foreground max-w-md">
+                      Create your first business client.
+                    </p>
+                    <Button className="mt-4" onClick={() => {setClientType('business'); setOpen(true);}}>Create Business</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {clients
+                  .filter(client => client.type === 'business')
+                  .map(client => (
+                    <Card key={client.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base font-medium">{client.businessName || client.name}</CardTitle>
+                          <div className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs rounded-full px-2 py-1">Business</div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm text-muted-foreground mb-4">
+                          <div>ID: {client.identifier}</div>
+                          <div>{client.email}</div>
+                          {client.phone && <div>{client.phone}</div>}
+                          {client.address && <div className="truncate max-w-[200px]">{client.address}</div>}
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full mt-4">View Details</Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
