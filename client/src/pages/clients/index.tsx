@@ -77,12 +77,51 @@ export default function ClientsPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['/api/clients'],
     queryFn: async () => {
-      const response = await apiRequest<{ success: boolean, data: Client[] }>('/api/clients');
+      const response = await apiRequest<{ success: boolean; data: Client[]; message?: string }>('/api/clients');
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch clients');
+      }
       return response.data;
     }
   });
   
   const clients = data || [];
+  
+  // Create client mutation
+  const createClientMutation = useMutation({
+    mutationFn: async (clientData: CreateClientData) => {
+      return apiRequest<{ success: boolean; data: Client; message?: string }>('/api/clients', {
+        method: 'POST',
+        body: clientData
+      });
+    },
+    onSuccess: () => {
+      // Invalidate clients query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      
+      toast({
+        title: "Client created",
+        description: `New ${clientType} client '${clientType === 'person' ? name : businessName}' has been created.`,
+      });
+      
+      setOpen(false);
+      
+      // Reset form
+      setName("");
+      setIdentifier("");
+      setEmail("");
+      setPhone("");
+      setAddress("");
+      setBusinessName("");
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to create client",
+        description: error.message || "An error occurred. Please try again.",
+      });
+    }
+  });
   
   const handleCreateClient = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,21 +154,20 @@ export default function ClientsPage() {
       return;
     }
     
-    // In a real app, this would call an API to create the client
-    toast({
-      title: "Client created",
-      description: `New ${clientType} client '${clientType === 'person' ? name : businessName}' has been created.`,
-    });
+    // Create client data object
+    const clientData: CreateClientData = {
+      type: clientType,
+      name,
+      identifier,
+      email
+    };
     
-    setOpen(false);
+    if (phone) clientData.phone = phone;
+    if (address) clientData.address = address;
+    if (clientType === 'business' && businessName) clientData.businessName = businessName;
     
-    // Reset form
-    setName("");
-    setIdentifier("");
-    setEmail("");
-    setPhone("");
-    setAddress("");
-    setBusinessName("");
+    // Call the mutation
+    createClientMutation.mutate(clientData);
   };
   
   return (

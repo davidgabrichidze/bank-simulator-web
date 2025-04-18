@@ -147,17 +147,15 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createAccount(account: InsertAccount): Promise<Account> {
-    // Generate a random account number if not provided
-    if (!account.accountNumber) {
-      account = {
-        ...account,
-        accountNumber: Math.floor(10000000 + Math.random() * 90000000).toString()
-      };
-    }
+    // Generate a random account number (it's omitted from InsertAccount)
+    const accountNumber = Math.floor(10000000 + Math.random() * 90000000).toString();
     
     const [newAccount] = await db
       .insert(accounts)
-      .values(account)
+      .values({
+        ...account,
+        accountNumber
+      })
       .returning();
     return newAccount;
   }
