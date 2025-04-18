@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Account, Transaction } from "@/types";
 
 export default function TransactionsPage() {
   const { toast } = useToast();
@@ -53,8 +54,8 @@ export default function TransactionsPage() {
   const [startDate, setStartDate] = useState("");
   
   // Sample data - in a real app, this would come from an API
-  const accounts = [];
-  const transactions = [];
+  const accounts: Account[] = [];
+  const transactions: Transaction[] = [];
 
   const handleDeposit = (e: React.FormEvent) => {
     e.preventDefault();

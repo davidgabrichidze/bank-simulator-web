@@ -21,9 +21,9 @@ interface SidebarLinkProps {
 function SidebarLink({ href, icon, label, isActive }: SidebarLinkProps) {
   return (
     <Link href={href}>
-      <a
+      <div
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all cursor-pointer",
           isActive
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -31,7 +31,7 @@ function SidebarLink({ href, icon, label, isActive }: SidebarLinkProps) {
       >
         {icon}
         <span>{label}</span>
-      </a>
+      </div>
     </Link>
   );
 }
@@ -48,17 +48,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-background px-4 md:px-6">
         <div className="flex items-center gap-3">
           <Link href="/">
-            <a className="font-bold text-xl text-primary flex items-center gap-2">
+            <div className="font-bold text-xl text-primary flex items-center gap-2 cursor-pointer">
               <CreditCard className="h-6 w-6" />
               <span>Bank Simulator</span>
-            </a>
+            </div>
           </Link>
         </div>
         <div className="ml-auto flex items-center gap-4">
           <Link href="/admin">
-            <a className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            <div className="text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer">
               Admin
-            </a>
+            </div>
           </Link>
         </div>
       </header>
