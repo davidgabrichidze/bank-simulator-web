@@ -1,0 +1,76 @@
+
+> **ROLE**: You are an expert full‑stack developer working inside Replit.  
+> **GOAL**: Build a lightweight **Bank Operations Simulator Web App** so that Optio’s business, QA and demo teams can trigger typical retail‑banking operations, observe the customer‑facing UI, and have every operation echoed to an external **Optio CDP** via REST.  
+> **CONTEXT**: Optio already exposes an API that ingests banking events (account‑created, deposit‑made, transfer‑sent, loan‑approved, etc.). Your app must call that API after each simulated operation so demo data appears in Optio dashboards.
+
+---
+
+#### 1. Functional Scope (“what the app must do”)
+1. **Account lifecycle**  
+   * Create personal / business accounts (choose currency, starting balance).  
+   * View account list & details (balance, history).  
+   * Close account.
+
+2. **Transactions**  
+   * **Deposit** & **Withdraw** (cash).  
+   * **Internal transfer** between two simulated accounts.  
+   * **External transfer** (simulate SWIFT/SEPA; requires beneficiary data).  
+   * **Scheduled payment** (one‑off or weekly/monthly).  
+   * **Loan simulation**  
+     * Apply for loan → simple credit‑score stub.  
+     * Generate payment schedule.  
+     * Mark instalments as paid / missed.
+
+3. **Event feed & audit**  
+   * Real‑time table showing every operation with timestamp & status.  
+   * Each entry shows hyperlink to Optio event ID returned by the API.
+
+4. **Admin utilities** (non‑customer)  
+   * Reset simulator (wipe DB, keep config).  
+   * Toggle Optio‑sync on/off, show last POST / response.
+
+---
+
+#### 2. Technical Requirements (“how to build it”)
+
+| Layer | Tech | Notes |
+|-------|------|-------|
+| **UI** | **Angular 19** standalone components, TailwindCSS (via @tailwindcss/angular), Angular Material for basic controls | Keep styling minimal; dark & light modes. |
+| **State** | ngrx @13 | Feature slices: accounts, transactions, settings. |
+| **Backend (mock)** | NestJS 10 running in the same Replit workspace | Acts as simulator core + REST for Optio. |
+| **Storage** | SQLite (via TypeORM) | Single file DB, auto‑migrations. |
+| **External API** | Call Optio endpoint **/v1/banking-events** with JWT from ENV `OPTIO_TOKEN` | Send JSON body matching sample below. |
+| **Dev Ops** | Nx monorepo style folders (`libs/...`), Dockerfile, `docker‑compose.yml` for local run | Expose ports 4200 (web) & 3000 (API). |
+| **Tests** | Jest + Cypress (happy‑path e2e for create→deposit→transfer). |
+
+Sample Optio event payload you must POST after every operation:
+```json
+{
+  "eventId": "uuid",
+  "type": "deposit-made",
+  "occurredAt": "ISO‑8601",
+  "payload": {
+    "accountId": "A123",
+    "amount": 150.00,
+    "currency": "USD",
+    "channel": "web-simulator"
+  }
+}
+```
+
+---
+
+#### 3. Non‑functional
+* Code **SRP‑compliant**; follow Optio layering rules (shared → core → features).  
+* 80 % unit‑test coverage for core services.  
+* README with **one‑command setup** (`npm run start:all`) and swagger link `/api/docs`.  
+* Use **English names** for folders, classes & actions; past‑tense verbs for ngrx actions (e.g., `accountCreated`, `depositMade`).  
+
+---
+
+#### 4. Deliverables
+1. Replit workspace URL with running app.  
+2. Git repository export.  
+3. Short Loom (≤ 3 min) demo showing: create account → deposit → Optio dashboard update.
+
+---
