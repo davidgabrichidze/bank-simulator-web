@@ -15,7 +15,10 @@ import {
   Plus,
   Edit,
   ArrowLeft,
-  Loader2
+  Loader2,
+  ArrowDown,
+  ArrowUp,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -114,6 +117,32 @@ export default function ClientDetailsPage() {
       const response = await apiRequest<{ success: boolean; data: Account[]; message?: string }>(`/api/clients/${clientId}/accounts`);
       if (!response.success) {
         throw new Error(response.message || 'Failed to fetch accounts');
+      }
+      return response.data;
+    },
+    enabled: !!clientId
+  });
+  
+  // Fetch client transactions
+  const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
+    queryKey: [`/api/clients/${clientId}/transactions`],
+    queryFn: async () => {
+      const response = await apiRequest<{ success: boolean; data: Transaction[]; message?: string }>(`/api/clients/${clientId}/transactions`);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch transactions');
+      }
+      return response.data;
+    },
+    enabled: !!clientId
+  });
+  
+  // Fetch client events
+  const { data: events, isLoading: isLoadingEvents } = useQuery({
+    queryKey: [`/api/clients/${clientId}/events`],
+    queryFn: async () => {
+      const response = await apiRequest<{ success: boolean; data: Event[]; message?: string }>(`/api/clients/${clientId}/events`);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch events');
       }
       return response.data;
     },
@@ -247,7 +276,7 @@ export default function ClientDetailsPage() {
                 <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
                   <Wallet className="h-8 w-8 mb-2 text-primary" />
                   <span className="text-sm font-medium">Transactions</span>
-                  <span className="text-2xl font-bold">0</span>
+                  <span className="text-2xl font-bold">{transactions?.length || 0}</span>
                 </div>
               </div>
             </CardContent>
@@ -377,13 +406,85 @@ export default function ClientDetailsPage() {
                 <CardDescription>Recent transaction activity</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <Wallet className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Transactions</h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                    This client has not made any transactions yet. Transactions will appear once the client starts using their accounts.
-                  </p>
-                </div>
+                {isLoadingTransactions ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : !transactions || transactions.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <Wallet className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Transactions</h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                      This client has not made any transactions yet. Transactions will appear once the client starts using their accounts.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {transactions.slice(0, 10).map(transaction => {
+                      // Determine icon and color based on transaction type
+                      let icon = <Wallet className="h-5 w-5" />;
+                      let bgColor = "bg-primary/10";
+                      let textColor = "text-primary";
+                      
+                      if (transaction.type === 'deposit') {
+                        icon = <ArrowDown className="h-5 w-5" />;
+                        bgColor = "bg-green-100 dark:bg-green-900";
+                        textColor = "text-green-600 dark:text-green-400";
+                      } else if (transaction.type === 'withdrawal') {
+                        icon = <ArrowUp className="h-5 w-5" />;
+                        bgColor = "bg-orange-100 dark:bg-orange-900";
+                        textColor = "text-orange-600 dark:text-orange-400";
+                      } else if (transaction.type === 'transfer') {
+                        icon = <RefreshCw className="h-5 w-5" />;
+                        bgColor = "bg-blue-100 dark:bg-blue-900";
+                        textColor = "text-blue-600 dark:text-blue-400";
+                      } else if (transaction.type === 'payment') {
+                        icon = <CreditCard className="h-5 w-5" />;
+                        bgColor = "bg-purple-100 dark:bg-purple-900";
+                        textColor = "text-purple-600 dark:text-purple-400";
+                      }
+                      
+                      return (
+                        <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <div className={`${bgColor} p-2 rounded-full`}>
+                              <div className={textColor}>
+                                {icon}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-medium capitalize">{transaction.type}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(transaction.transactionDate).toLocaleDateString()} • 
+                                {transaction.description || `Transaction #${transaction.id}`}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <div className={`font-medium ${
+                              transaction.type === 'deposit' ? 'text-green-600 dark:text-green-400' : 
+                              transaction.type === 'withdrawal' ? 'text-red-600 dark:text-red-400' : ''
+                            }`}>
+                              {new Intl.NumberFormat('en-US', { 
+                                style: 'currency', 
+                                currency: transaction.currency 
+                              }).format(transaction.amount)}
+                            </div>
+                            <div className="text-sm text-muted-foreground capitalize">{transaction.status}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {transactions.length > 10 && (
+                      <div className="text-center mt-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/transactions?clientId=${client.id}`}>View All Transactions</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -395,13 +496,67 @@ export default function ClientDetailsPage() {
                 <CardDescription>Client activity events</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <div className="h-12 w-12 text-muted-foreground mb-4">🔔</div>
-                  <h3 className="text-lg font-medium mb-2">No Events</h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                    No events have been recorded for this client yet.
-                  </p>
-                </div>
+                {isLoadingEvents ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : !events || events.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <div className="h-12 w-12 text-muted-foreground mb-4">🔔</div>
+                    <h3 className="text-lg font-medium mb-2">No Events</h3>
+                    <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                      No events have been recorded for this client yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {events.map(event => {
+                      // Determine icon based on event type
+                      let icon = '🔔';
+                      let bgColor = "bg-primary/10";
+                      
+                      if (event.type === 'account_created') {
+                        icon = '🏦';
+                        bgColor = "bg-green-100 dark:bg-green-900";
+                      } else if (event.type === 'transaction_completed') {
+                        icon = '💸';
+                        bgColor = "bg-blue-100 dark:bg-blue-900";
+                      } else if (event.type === 'loan_application') {
+                        icon = '📝';
+                        bgColor = "bg-orange-100 dark:bg-orange-900";
+                      } else if (event.type === 'kyc_verification') {
+                        icon = '🔒';
+                        bgColor = "bg-purple-100 dark:bg-purple-900";
+                      }
+                      
+                      // Try to parse payload for more details
+                      let payloadObj = {};
+                      try {
+                        payloadObj = JSON.parse(event.payload);
+                      } catch (e) {
+                        // Ignore parsing error
+                      }
+                      
+                      return (
+                        <div key={event.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                          <div className={`${bgColor} p-2 rounded-full h-10 w-10 flex items-center justify-center text-lg`}>
+                            {icon}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium">{event.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(event.occurredAt).toLocaleString()}
+                            </div>
+                            <div className="text-sm mt-1 text-muted-foreground">
+                              {payloadObj.description || `Event ID: ${event.eventId}`}
+                            </div>
+                          </div>
+                          <div className="text-xs px-2 py-1 rounded-full bg-muted">{event.status}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

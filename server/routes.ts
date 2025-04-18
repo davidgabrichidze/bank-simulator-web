@@ -136,6 +136,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.get("/api/clients/:clientId/transactions", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      // First get the client's accounts
+      const accounts = await storage.getAccountsByClientId(clientId);
+      if (!accounts.length) {
+        return res.json({ success: true, data: [] });
+      }
+      
+      // Get transactions for each account
+      const accountIds = accounts.map(account => account.id);
+      let allTransactions: any[] = [];
+      
+      for (const accountId of accountIds) {
+        const transactions = await storage.getTransactionsByAccountId(accountId);
+        allTransactions = [...allTransactions, ...transactions];
+      }
+      
+      // Sort by date (newest first)
+      allTransactions.sort((a, b) => 
+        new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+      );
+      
+      res.json({ success: true, data: allTransactions });
+    } catch (error) {
+      console.error("Error fetching client transactions:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch client transactions" });
+    }
+  });
+  
   // Events routes
   app.get("/api/events", async (req, res) => {
     try {
@@ -144,6 +178,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching events:", error);
       res.status(500).json({ success: false, message: "Failed to fetch events" });
+    }
+  });
+  
+  app.get("/api/clients/:clientId/events", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      // First check if client exists
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: "Client not found" });
+      }
+      
+      // Get all events (we would filter by client in a real app)
+      const events = await storage.getEvents();
+      
+      // For now, limit to a few events related to the client
+      // In a real implementation, we would store clientId in events table
+      const clientEvents = events.filter(event => {
+        try {
+          const payload = JSON.parse(event.payload);
+          return payload.clientId === clientId;
+        } catch (e) {
+          return false;
+        }
+      });
+      
+      res.json({ success: true, data: clientEvents });
+    } catch (error) {
+      console.error("Error fetching client events:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch client events" });
     }
   });
 
