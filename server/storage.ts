@@ -1,5 +1,6 @@
 import { 
   users, accounts, clients, transactions, events, loans, loanPayments, scheduledPayments, settings,
+  productCatalog, customerProducts, cards, deposits,
   type User, type InsertUser,
   type Client, type InsertClient,
   type Account, type InsertAccount,
@@ -8,7 +9,11 @@ import {
   type Loan, type InsertLoan,
   type LoanPayment, type InsertLoanPayment,
   type ScheduledPayment, type InsertScheduledPayment,
-  type Setting, type InsertSetting
+  type Setting, type InsertSetting,
+  type ProductCatalog, type InsertProductCatalog,
+  type CustomerProduct, type InsertCustomerProduct,
+  type Card, type InsertCard,
+  type Deposit, type InsertDeposit
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -73,6 +78,34 @@ export interface IStorage {
   getSetting(key: string): Promise<string | undefined>;
   getSettings(): Promise<{ [key: string]: string }>;
   updateSetting(key: string, value: string): Promise<Setting>;
+  
+  // Product Catalog methods
+  getProduct(id: number): Promise<ProductCatalog | undefined>;
+  getProductByCode(code: string): Promise<ProductCatalog | undefined>;
+  getProductCatalog(): Promise<ProductCatalog[]>;
+  createProduct(product: InsertProductCatalog): Promise<ProductCatalog>;
+  updateProduct(id: number, product: Partial<InsertProductCatalog>): Promise<ProductCatalog | undefined>;
+  
+  // Customer Products methods
+  getCustomerProduct(id: number): Promise<CustomerProduct | undefined>;
+  getCustomerProductsByClientId(clientId: number): Promise<CustomerProduct[]>;
+  getCustomerProductsByProductId(productId: number): Promise<CustomerProduct[]>;
+  createCustomerProduct(customerProduct: InsertCustomerProduct): Promise<CustomerProduct>;
+  updateCustomerProduct(id: number, status: string): Promise<CustomerProduct | undefined>;
+  
+  // Card methods
+  getCard(id: number): Promise<Card | undefined>;
+  getCardsByCustomerProductId(customerProductId: number): Promise<Card[]>;
+  getCardsByAccountId(accountId: number): Promise<Card[]>;
+  createCard(card: InsertCard): Promise<Card>;
+  updateCardStatus(id: number, status: string): Promise<Card | undefined>;
+  
+  // Deposit methods
+  getDeposit(id: number): Promise<Deposit | undefined>;
+  getDepositsByCustomerProductId(customerProductId: number): Promise<Deposit[]>;
+  getDepositsByAccountId(accountId: number): Promise<Deposit[]>;
+  createDeposit(deposit: InsertDeposit): Promise<Deposit>;
+  updateDepositStatus(id: number, status: string): Promise<Deposit | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -371,6 +404,153 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return newSetting;
+  }
+
+  // Product Catalog methods
+  async getProduct(id: number): Promise<ProductCatalog | undefined> {
+    const [product] = await db.select().from(productCatalog).where(eq(productCatalog.id, id));
+    return product || undefined;
+  }
+
+  async getProductByCode(code: string): Promise<ProductCatalog | undefined> {
+    const [product] = await db.select().from(productCatalog).where(eq(productCatalog.code, code));
+    return product || undefined;
+  }
+
+  async getProductCatalog(): Promise<ProductCatalog[]> {
+    return db.select().from(productCatalog).where(eq(productCatalog.isActive, true)).orderBy(productCatalog.name);
+  }
+
+  async createProduct(product: InsertProductCatalog): Promise<ProductCatalog> {
+    const [newProduct] = await db
+      .insert(productCatalog)
+      .values(product)
+      .returning();
+    return newProduct;
+  }
+
+  async updateProduct(id: number, product: Partial<InsertProductCatalog>): Promise<ProductCatalog | undefined> {
+    const [updatedProduct] = await db
+      .update(productCatalog)
+      .set({ ...product, updatedAt: new Date() })
+      .where(eq(productCatalog.id, id))
+      .returning();
+    return updatedProduct || undefined;
+  }
+
+  // Customer Products methods
+  async getCustomerProduct(id: number): Promise<CustomerProduct | undefined> {
+    const [customerProduct] = await db.select().from(customerProducts).where(eq(customerProducts.id, id));
+    return customerProduct || undefined;
+  }
+
+  async getCustomerProductsByClientId(clientId: number): Promise<CustomerProduct[]> {
+    return db.select().from(customerProducts).where(eq(customerProducts.clientId, clientId));
+  }
+
+  async getCustomerProductsByProductId(productId: number): Promise<CustomerProduct[]> {
+    return db.select().from(customerProducts).where(eq(customerProducts.productId, productId));
+  }
+
+  async createCustomerProduct(customerProduct: InsertCustomerProduct): Promise<CustomerProduct> {
+    const [newCustomerProduct] = await db
+      .insert(customerProducts)
+      .values(customerProduct)
+      .returning();
+    return newCustomerProduct;
+  }
+
+  async updateCustomerProduct(id: number, status: string): Promise<CustomerProduct | undefined> {
+    const [updatedCustomerProduct] = await db
+      .update(customerProducts)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(customerProducts.id, id))
+      .returning();
+    return updatedCustomerProduct || undefined;
+  }
+
+  // Card methods
+  async getCard(id: number): Promise<Card | undefined> {
+    const [card] = await db.select().from(cards).where(eq(cards.id, id));
+    return card || undefined;
+  }
+
+  async getCardsByCustomerProductId(customerProductId: number): Promise<Card[]> {
+    return db.select().from(cards).where(eq(cards.customerProductId, customerProductId));
+  }
+
+  async getCardsByAccountId(accountId: number): Promise<Card[]> {
+    return db.select().from(cards).where(eq(cards.accountId, accountId));
+  }
+
+  async createCard(card: InsertCard): Promise<Card> {
+    // Generate card details
+    const cardNumber = Math.floor(1000000000000000 + Math.random() * 9000000000000000).toString();
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 3);
+    const expiryDateStr = `${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}/${expiryDate.getFullYear().toString().slice(-2)}`;
+    const cvv = Math.floor(100 + Math.random() * 900).toString();
+
+    const [newCard] = await db
+      .insert(cards)
+      .values({
+        ...card,
+        cardNumber,
+        expiryDate: expiryDateStr,
+        cvv
+      })
+      .returning();
+    return newCard;
+  }
+
+  async updateCardStatus(id: number, status: string): Promise<Card | undefined> {
+    const [updatedCard] = await db
+      .update(cards)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(cards.id, id))
+      .returning();
+    return updatedCard || undefined;
+  }
+
+  // Deposit methods
+  async getDeposit(id: number): Promise<Deposit | undefined> {
+    const [deposit] = await db.select().from(deposits).where(eq(deposits.id, id));
+    return deposit || undefined;
+  }
+
+  async getDepositsByCustomerProductId(customerProductId: number): Promise<Deposit[]> {
+    return db.select().from(deposits).where(eq(deposits.customerProductId, customerProductId));
+  }
+
+  async getDepositsByAccountId(accountId: number): Promise<Deposit[]> {
+    return db.select().from(deposits).where(eq(deposits.accountId, accountId));
+  }
+
+  async createDeposit(deposit: InsertDeposit): Promise<Deposit> {
+    // Calculate maturity date if term is provided
+    let maturityDate = undefined;
+    if (deposit.term) {
+      maturityDate = new Date();
+      maturityDate.setMonth(maturityDate.getMonth() + deposit.term);
+    }
+
+    const [newDeposit] = await db
+      .insert(deposits)
+      .values({
+        ...deposit,
+        maturityDate
+      })
+      .returning();
+    return newDeposit;
+  }
+
+  async updateDepositStatus(id: number, status: string): Promise<Deposit | undefined> {
+    const [updatedDeposit] = await db
+      .update(deposits)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(deposits.id, id))
+      .returning();
+    return updatedDeposit || undefined;
   }
 }
 
