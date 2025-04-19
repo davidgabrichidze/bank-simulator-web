@@ -18,12 +18,14 @@ import {
   Loader2,
   ArrowDown,
   ArrowUp,
-  RefreshCw
+  RefreshCw,
+  Package
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import AccountFormDialog from "@/components/ui/account-form-dialog";
+import ProductCatalogDialog from "@/components/ui/product-catalog-dialog";
 
 // Define types
 interface Client {
@@ -90,6 +92,65 @@ interface Event {
   createdAt: string;
 }
 
+interface ProductCatalog {
+  id: number;
+  type: string;
+  code: string;
+  name: string;
+  description: string;
+  details: any;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CustomerProduct {
+  id: number;
+  clientId: number;
+  productId: number;
+  accountId?: number;
+  status: string;
+  appliedAt: string;
+  approvedAt?: string;
+  details?: any;
+  createdAt: string;
+  updatedAt: string;
+  product?: ProductCatalog;
+}
+
+interface Card {
+  id: number;
+  customerProductId: number;
+  accountId: number;
+  cardNumber?: string;
+  cardType: string;
+  cardNetwork: string;
+  expiryDate?: string;
+  cardholderName: string;
+  status: string;
+  creditLimit?: number;
+  availableCredit?: number;
+  isContactless: boolean;
+  isVirtual: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Deposit {
+  id: number;
+  customerProductId: number;
+  accountId: number;
+  depositType: string;
+  amount: number;
+  currency: string;
+  interestRate: number;
+  term?: number;
+  maturityDate?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function ClientDetailsPage() {
   const [_, params] = useRoute<{ id: string }>("/clients/:id");
   const clientId = params?.id ? parseInt(params.id) : 0;
@@ -143,6 +204,19 @@ export default function ClientDetailsPage() {
       const response = await apiRequest<{ success: boolean; data: Event[]; message?: string }>(`/api/clients/${clientId}/events`);
       if (!response.success) {
         throw new Error(response.message || 'Failed to fetch events');
+      }
+      return response.data;
+    },
+    enabled: !!clientId
+  });
+  
+  // Fetch customer products
+  const { data: customerProducts, isLoading: isLoadingProducts } = useQuery({
+    queryKey: [`/api/clients/${clientId}/products`],
+    queryFn: async () => {
+      const response = await apiRequest<{ success: boolean; data: CustomerProduct[]; message?: string }>(`/api/clients/${clientId}/products`);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch customer products');
       }
       return response.data;
     },
@@ -248,10 +322,11 @@ export default function ClientDetailsPage() {
                 <CardTitle>Products & Services</CardTitle>
                 <CardDescription>Banking products and services for this client</CardDescription>
               </div>
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
+              <ProductCatalogDialog 
+                clientId={client.id} 
+                clientName={clientName}
+                accounts={accounts}
+              />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -264,21 +339,64 @@ export default function ClientDetailsPage() {
                 <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
                   <CreditCard className="h-8 w-8 mb-2 text-primary" />
                   <span className="text-sm font-medium">Cards</span>
-                  <span className="text-2xl font-bold">0</span>
+                  <span className="text-2xl font-bold">{customerProducts?.filter(p => p.product?.type === 'card')?.length || 0}</span>
                 </div>
                 
                 <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
                   <Receipt className="h-8 w-8 mb-2 text-primary" />
                   <span className="text-sm font-medium">Loans</span>
-                  <span className="text-2xl font-bold">0</span>
+                  <span className="text-2xl font-bold">{customerProducts?.filter(p => p.product?.type === 'loan')?.length || 0}</span>
                 </div>
                 
                 <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-                  <Wallet className="h-8 w-8 mb-2 text-primary" />
-                  <span className="text-sm font-medium">Transactions</span>
-                  <span className="text-2xl font-bold">{transactions?.length || 0}</span>
+                  <Package className="h-8 w-8 mb-2 text-primary" />
+                  <span className="text-sm font-medium">Products</span>
+                  <span className="text-2xl font-bold">{customerProducts?.length || 0}</span>
                 </div>
               </div>
+              
+              {isLoadingProducts ? (
+                <div className="flex justify-center p-4 mt-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : customerProducts && customerProducts.length > 0 ? (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium mb-3">Active Products</h3>
+                  <div className="grid gap-3">
+                    {customerProducts.map(cp => (
+                      <div key={cp.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            {cp.product?.type === 'account' && <Landmark className="h-4 w-4 text-primary" />}
+                            {cp.product?.type === 'card' && <CreditCard className="h-4 w-4 text-primary" />}
+                            {cp.product?.type === 'loan' && <Receipt className="h-4 w-4 text-primary" />}
+                            {cp.product?.type === 'deposit' && <PiggyBank className="h-4 w-4 text-primary" />}
+                            {!cp.product?.type && <Package className="h-4 w-4 text-primary" />}
+                          </div>
+                          <div>
+                            <div className="font-medium">{cp.product?.name || 'Unknown Product'}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Added on {new Date(cp.appliedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`px-2 py-1 rounded-full text-xs ${
+                            cp.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 
+                            cp.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' : 
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {cp.status.charAt(0).toUpperCase() + cp.status.slice(1)}
+                          </div>
+                          <Button variant="outline" size="sm">
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>
