@@ -45,11 +45,15 @@ export default function TransactionsPage() {
   // Form state
   const [amount, setAmount] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [clientId, setClientId] = useState("");
   const [targetAccountId, setTargetAccountId] = useState("");
   const [beneficiaryName, setBeneficiaryName] = useState("");
   const [beneficiaryAccount, setBeneficiaryAccount] = useState("");
   const [bankCode, setBankCode] = useState("");
+  const [description, setDescription] = useState("");
   const [reference, setReference] = useState("");
+  const [channel, setChannel] = useState("online");
+  const [method, setMethod] = useState("transfer");
   const [frequency, setFrequency] = useState("one-off");
   const [startDate, setStartDate] = useState("");
   

@@ -18,8 +18,14 @@ export interface Transaction {
   type: 'deposit' | 'withdrawal' | 'transfer' | 'external-transfer';
   amount: number;
   currency: string;
+  description?: string;
   status: 'completed' | 'pending' | 'failed';
   reference?: string;
+  clientId?: number;
+  channel?: string; // mobile, online, branch, atm, pos
+  method?: string; // card, cash, transfer, check
+  cardId?: number; // Reference to card if transaction was made with a card
+  transactionDate: string;
   createdAt: string;
 }
 
@@ -42,14 +48,19 @@ export interface ScheduledPayment {
 export interface Loan {
   id: number;
   accountId: number;
+  clientId?: number; // Customer who applied for the loan
+  customerProductId?: number; // Link to product catalog
   amount: number;
   currency: string;
   interestRate: number;
   term: number; // In months
   startDate: string;
-  endDate?: string;
+  purpose?: string; // Purpose of the loan
+  collateral?: string; // Description of collateral if any
   status: 'pending' | 'approved' | 'rejected' | 'active' | 'completed';
   creditScore?: number;
+  approvalDate?: string;
+  decisionNotes?: string;
   createdAt: string;
 }
 
@@ -69,8 +80,16 @@ export interface Event {
   id: number;
   eventId: string;
   type: string;
+  clientId?: number; // Customer associated with the event
+  accountId?: number; // Account associated with the event
+  transactionId?: number; // Transaction associated with the event
+  loanId?: number; // Loan associated with the event
+  cardId?: number; // Card associated with the event
+  depositId?: number; // Deposit associated with the event
+  customerProductId?: number; // Product associated with the event
   occurredAt: string;
   payload: string;
+  channel?: string; // online, branch, atm, mobile, etc.
   status: 'pending' | 'sent' | 'failed';
   optioResponse?: string;
   createdAt: string;
@@ -100,28 +119,44 @@ export interface CreateAccountFormData {
 
 export interface DepositFormData {
   accountId: number;
+  clientId?: number;
   amount: number;
+  description?: string;
+  channel?: string; // mobile, online, branch, atm, pos
+  method?: string; // card, cash, transfer, check
 }
 
 export interface WithdrawalFormData {
   accountId: number;
+  clientId?: number;
   amount: number;
+  description?: string;
+  channel?: string; // mobile, online, branch, atm, pos
+  method?: string; // card, cash, transfer, check
 }
 
 export interface TransferFormData {
   accountId: number;
   targetAccountId: number;
+  clientId?: number;
   amount: number;
+  description?: string;
   reference?: string;
+  channel?: string; // mobile, online, branch, atm, pos
+  method?: string; // card, cash, transfer, check
 }
 
 export interface ExternalTransferFormData {
   accountId: number;
+  clientId?: number;
   beneficiaryName: string;
   beneficiaryAccount: string;
   bankCode: string;
   amount: number;
+  description?: string;
   reference?: string;
+  channel?: string; // mobile, online, branch, atm, pos
+  method?: string; // card, cash, transfer, check
 }
 
 export interface ScheduledPaymentFormData {
@@ -135,11 +170,15 @@ export interface ScheduledPaymentFormData {
 
 export interface LoanApplicationFormData {
   accountId: number;
+  clientId?: number;
+  customerProductId?: number;
   amount: number;
   currency: string;
   interestRate: number;
   term: number;
   startDate: string;
+  purpose?: string;
+  collateral?: string;
 }
 
 export interface PayLoanInstallmentFormData {
