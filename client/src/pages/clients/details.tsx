@@ -630,35 +630,44 @@ export default function ClientDetailsPage() {
                   <div className="grid gap-4">
                     {events.map(event => {
                       // Determine icon based on event type
-                      let icon = '🔔';
+                      let iconElement: React.ReactNode = <span>🔔</span>;
                       let bgColor = "bg-primary/10";
                       
                       if (event.type === 'account_created') {
-                        icon = '🏦';
+                        iconElement = <span>🏦</span>;
                         bgColor = "bg-green-100 dark:bg-green-900";
                       } else if (event.type === 'transaction_completed') {
-                        icon = '💸';
+                        iconElement = <span>💸</span>;
                         bgColor = "bg-blue-100 dark:bg-blue-900";
                       } else if (event.type === 'loan_application') {
-                        icon = '📝';
+                        iconElement = <span>📝</span>;
                         bgColor = "bg-orange-100 dark:bg-orange-900";
                       } else if (event.type === 'kyc_verification') {
-                        icon = '🔒';
+                        iconElement = <span>🔒</span>;
                         bgColor = "bg-purple-100 dark:bg-purple-900";
                       }
                       
                       // Try to parse payload for more details
-                      let payloadObj = {};
+                      let payloadObj: any = {};
                       try {
                         payloadObj = JSON.parse(event.payload);
                       } catch (e) {
                         // Ignore parsing error
                       }
                       
+                      // Get description from payload or default to event ID
+                      const eventDescription = 
+                        typeof payloadObj === 'object' && 
+                        payloadObj !== null && 
+                        'description' in payloadObj && 
+                        typeof payloadObj.description === 'string' 
+                          ? payloadObj.description 
+                          : `Event ID: ${event.eventId}`;
+                      
                       return (
                         <div key={event.id} className="flex items-center gap-4 p-4 border rounded-lg">
                           <div className={`${bgColor} p-2 rounded-full h-10 w-10 flex items-center justify-center text-lg`}>
-                            {icon}
+                            {iconElement}
                           </div>
                           <div className="flex-1">
                             <div className="font-medium">{event.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
@@ -666,7 +675,7 @@ export default function ClientDetailsPage() {
                               {new Date(event.occurredAt).toLocaleString()}
                             </div>
                             <div className="text-sm mt-1 text-muted-foreground">
-                              {payloadObj.description || `Event ID: ${event.eventId}`}
+                              {eventDescription}
                             </div>
                           </div>
                           <div className="text-xs px-2 py-1 rounded-full bg-muted">{event.status}</div>

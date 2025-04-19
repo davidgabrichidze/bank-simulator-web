@@ -74,12 +74,19 @@ export default function ProductCatalogDialog({
 
   // Create customer product mutation
   const createCustomerProduct = useMutation({
-    mutationFn: async (data: { productId: number; accountId?: number; details?: any }) => {
+    mutationFn: async (data: { productId: number; accountId?: number | null; details?: any }) => {
+      // Convert null accountId to undefined, which is what the API expects
+      const payload = {
+        ...data,
+        accountId: data.accountId === null ? undefined : data.accountId,
+        details: data.details || {}
+      };
+      
       const response = await apiRequest<{ success: boolean; data: CustomerProduct; message?: string }>(
         `/api/clients/${clientId}/products`,
         {
           method: 'POST',
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -141,7 +148,7 @@ export default function ProductCatalogDialog({
 
     createCustomerProduct.mutate({
       productId: selectedProductId,
-      accountId: needsAccount ? selectedAccountId : undefined,
+      accountId: needsAccount && selectedAccountId ? selectedAccountId : undefined,
       details: {}
     });
   };
@@ -206,7 +213,7 @@ export default function ProductCatalogDialog({
                     return (
                       <div key={key} className="flex justify-between">
                         <span>{formattedKey}:</span>
-                        <span>{value}</span>
+                        <span>{String(value)}</span>
                       </div>
                     );
                   })}
