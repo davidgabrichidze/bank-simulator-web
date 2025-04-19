@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertClientSchema, insertAccountSchema } from "@shared/schema";
+import { insertClientSchema, insertAccountSchema, insertProductCatalogSchema, insertCustomerProductSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Client routes
@@ -215,6 +215,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Product catalog routes
+  app.get("/api/products", async (req, res) => {
+    try {
+      const products = await storage.getProductCatalog();
+      res.json({ success: true, data: products });
+    } catch (error) {
+      console.error("Error fetching product catalog:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch product catalog" });
+    }
+  });
+  
+  app.post("/api/products", async (req, res) => {
+    try {
+      const result = insertProductCatalogSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid product data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const product = await storage.createProduct(result.data);
+      res.status(201).json({ success: true, data: product });
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ success: false, message: "Failed to create product" });
+    }
+  });
+  
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Invalid product ID" });
+      }
+      
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ success: false, message: "Product not found" });
+      }
+      
+      res.json({ success: true, data: product });
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch product" });
+    }
+  });
+  
+  // Customer products routes (products assigned to customers)
+  app.get("/api/clients/:clientId/products", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: "Client not found" });
+      }
+      
+      const customerProducts = await storage.getCustomerProductsByClientId(clientId);
+      res.json({ success: true, data: customerProducts });
+    } catch (error) {
+      console.error("Error fetching customer products:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch customer products" });
+    }
+  });
+  
+  app.post("/api/clients/:clientId/products", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ success: false, message: "Invalid client ID" });
+      }
+      
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: "Client not found" });
+      }
+      
+      // Add clientId to the body
+      const customerProductData = { ...req.body, clientId };
+      
+      const result = insertCustomerProductSchema.safeParse(customerProductData);
+      if (!result.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid customer product data", 
+          errors: result.error.format() 
+        });
+      }
+      
+      const customerProduct = await storage.createCustomerProduct(result.data);
+      res.status(201).json({ success: true, data: customerProduct });
+    } catch (error) {
+      console.error("Error creating customer product:", error);
+      res.status(500).json({ success: false, message: "Failed to create customer product" });
+    }
+  });
+  
   // Settings routes
   app.get("/api/settings", async (req, res) => {
     try {

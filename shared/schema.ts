@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, doublePrecision, timestamp, varchar, decimal, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, doublePrecision, timestamp, varchar, decimal, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -188,6 +188,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 // Define relations
 export const clientsRelations = relations(clients, ({ many }) => ({
   accounts: many(accounts),
+  customerProducts: many(customerProducts),
 }));
 
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
@@ -234,3 +235,157 @@ export type InsertClient = z.infer<typeof insertClientSchema>;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// Product catalog tables
+export const productCatalog = pgTable("product_catalog", {
+  id: serial("id").primaryKey(),
+  type: varchar("type", { length: 50 }).notNull(), // account, loan, deposit, card
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  details: jsonb("details"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertProductCatalogSchema = createInsertSchema(productCatalog).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Customer products - linking customers to products they have
+export const customerProducts = pgTable("customer_products", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clients.id),
+  productId: integer("product_id").notNull().references(() => productCatalog.id),
+  accountId: integer("account_id").references(() => accounts.id),
+  status: varchar("status", { length: 50 }).notNull().default("active"), // active, pending, closed
+  appliedAt: timestamp("applied_at").notNull().defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCustomerProductSchema = createInsertSchema(customerProducts).omit({
+  id: true,
+  status: true,
+  appliedAt: true,
+  approvedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Card products
+export const cards = pgTable("cards", {
+  id: serial("id").primaryKey(),
+  customerProductId: integer("customer_product_id").notNull().references(() => customerProducts.id),
+  accountId: integer("account_id").notNull().references(() => accounts.id),
+  cardNumber: varchar("card_number", { length: 30 }),
+  cardType: varchar("card_type", { length: 50 }).notNull(), // debit, credit
+  cardNetwork: varchar("card_network", { length: 50 }).notNull(), // visa, mastercard, etc.
+  expiryDate: varchar("expiry_date", { length: 10 }),
+  cvv: varchar("cvv", { length: 5 }),
+  cardholderName: varchar("cardholder_name", { length: 100 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, active, blocked, expired
+  creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }),
+  availableCredit: decimal("available_credit", { precision: 15, scale: 2 }),
+  pinHash: varchar("pin_hash", { length: 100 }),
+  isContactless: boolean("is_contactless").notNull().default(true),
+  isVirtual: boolean("is_virtual").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCardSchema = createInsertSchema(cards).omit({
+  id: true,
+  cardNumber: true,
+  expiryDate: true,
+  cvv: true,
+  status: true,
+  pinHash: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Deposit (savings) products
+export const deposits = pgTable("deposits", {
+  id: serial("id").primaryKey(),
+  customerProductId: integer("customer_product_id").notNull().references(() => customerProducts.id),
+  accountId: integer("account_id").notNull().references(() => accounts.id),
+  depositType: varchar("deposit_type", { length: 50 }).notNull(), // fixed, savings, etc.
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
+  term: integer("term"), // in months (null for open-ended)
+  maturityDate: timestamp("maturity_date"),
+  status: varchar("status", { length: 50 }).notNull().default("active"), // active, matured, closed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertDepositSchema = createInsertSchema(deposits).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// Add types
+export type ProductCatalog = typeof productCatalog.$inferSelect;
+export type InsertProductCatalog = z.infer<typeof insertProductCatalogSchema>;
+
+export type CustomerProduct = typeof customerProducts.$inferSelect;
+export type InsertCustomerProduct = z.infer<typeof insertCustomerProductSchema>;
+
+export type Card = typeof cards.$inferSelect;
+export type InsertCard = z.infer<typeof insertCardSchema>;
+
+export type Deposit = typeof deposits.$inferSelect;
+export type InsertDeposit = z.infer<typeof insertDepositSchema>;
+
+// Define relations for product catalog tables
+export const productCatalogRelations = relations(productCatalog, ({ many }) => ({
+  customerProducts: many(customerProducts),
+}));
+
+export const customerProductsRelations = relations(customerProducts, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [customerProducts.clientId],
+    references: [clients.id],
+  }),
+  product: one(productCatalog, {
+    fields: [customerProducts.productId],
+    references: [productCatalog.id],
+  }),
+  account: one(accounts, {
+    fields: [customerProducts.accountId],
+    references: [accounts.id],
+  }),
+  cards: many(cards),
+  deposits: many(deposits),
+}));
+
+export const cardsRelations = relations(cards, ({ one }) => ({
+  customerProduct: one(customerProducts, {
+    fields: [cards.customerProductId],
+    references: [customerProducts.id],
+  }),
+  account: one(accounts, {
+    fields: [cards.accountId],
+    references: [accounts.id],
+  }),
+}));
+
+export const depositsRelations = relations(deposits, ({ one }) => ({
+  customerProduct: one(customerProducts, {
+    fields: [deposits.customerProductId],
+    references: [customerProducts.id],
+  }),
+  account: one(accounts, {
+    fields: [deposits.accountId],
+    references: [accounts.id],
+  }),
+}));
