@@ -26,6 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import AccountFormDialog from "@/components/ui/account-form-dialog";
 import ProductCatalogDialog from "@/components/ui/product-catalog-dialog";
+import { WithHelpContext } from "@/components/ui/help-context-provider";
 
 // Define types
 interface Client {
@@ -247,22 +248,36 @@ export default function ClientDetailsPage() {
   
   const clientName = client.type === 'business' && client.businessName ? client.businessName : client.name;
   
+  // Create help context for this client
+  const helpContext = {
+    entity: clientName,
+    entityType: client.type === 'person' ? 'person customer' : 'business customer',
+    entityId: client.id,
+    page: 'customer details',
+    customerInfo: {
+      accountCount: accounts?.length || 0,
+      productCount: customerProducts?.length || 0,
+      transactionCount: transactions?.length || 0,
+    }
+  };
+
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/clients">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{clientName}</h1>
-            <p className="text-muted-foreground">
-              {client.type === 'person' ? 'Person' : 'Business'} Client
-            </p>
+    <WithHelpContext context={helpContext}>
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/clients">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{clientName}</h1>
+              <p className="text-muted-foreground">
+                {client.type === 'person' ? 'Person' : 'Business'} Client
+              </p>
+            </div>
           </div>
-        </div>
         
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
@@ -689,6 +704,7 @@ export default function ClientDetailsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </WithHelpContext>
   );
 }

@@ -348,6 +348,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI assistance routes
+  app.post("/api/ai/query", handleAiQuery);
+
   // Register error handler middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error("Global error handler caught:", err);
