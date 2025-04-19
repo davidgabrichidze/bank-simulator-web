@@ -54,6 +54,11 @@ export const transactions = pgTable("transactions", {
   description: text("description"),
   targetAccountId: integer("target_account_id").references(() => accounts.id),
   status: varchar("status", { length: 20 }).notNull().default("completed"),
+  channel: varchar("channel", { length: 30 }), // mobile, online, branch, atm, pos
+  method: varchar("method", { length: 30 }), // card, cash, transfer, check
+  reference: varchar("reference", { length: 50 }), // Transaction reference number
+  cardId: integer("card_id").references(() => cards.id), // Reference to card if transaction was made with a card
+  clientId: integer("client_id").references(() => clients.id), // Customer who initiated the transaction
   transactionDate: timestamp("transaction_date").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -87,13 +92,19 @@ export const insertScheduledPaymentSchema = createInsertSchema(scheduledPayments
 export const loans = pgTable("loans", {
   id: serial("id").primaryKey(),
   accountId: integer("account_id").notNull().references(() => accounts.id),
+  clientId: integer("client_id").references(() => clients.id), // Customer who applied for the loan
+  customerProductId: integer("customer_product_id").references(() => customerProducts.id), // Link to product catalog
   amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
   term: integer("term").notNull(), // in months
   startDate: timestamp("start_date").notNull(),
+  purpose: varchar("purpose", { length: 100 }), // Purpose of the loan
+  collateral: text("collateral"), // Description of collateral if any
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, approved, rejected, active, completed
   creditScore: integer("credit_score"),
+  approvalDate: timestamp("approval_date"),
+  decisionNotes: text("decision_notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -125,8 +136,16 @@ export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   eventId: varchar("event_id", { length: 36 }).notNull().unique(),
   type: varchar("type", { length: 50 }).notNull(),
+  clientId: integer("client_id").references(() => clients.id), // Customer associated with the event
+  accountId: integer("account_id").references(() => accounts.id), // Account associated with the event
+  transactionId: integer("transaction_id").references(() => transactions.id), // Transaction associated with the event
+  loanId: integer("loan_id").references(() => loans.id), // Loan associated with the event
+  cardId: integer("card_id").references(() => cards.id), // Card associated with the event
+  depositId: integer("deposit_id").references(() => deposits.id), // Deposit associated with the event
+  customerProductId: integer("customer_product_id").references(() => customerProducts.id), // Product associated with the event
   occurredAt: timestamp("occurred_at").notNull().defaultNow(),
   payload: text("payload").notNull(),
+  channel: varchar("channel", { length: 30 }), // online, branch, atm, mobile, etc.
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, sent, failed
   optioResponse: text("optio_response"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -189,6 +208,9 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export const clientsRelations = relations(clients, ({ many }) => ({
   accounts: many(accounts),
   customerProducts: many(customerProducts),
+  transactions: many(transactions),
+  loans: many(loans),
+  events: many(events),
 }));
 
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
@@ -210,12 +232,28 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
     fields: [transactions.targetAccountId],
     references: [accounts.id],
   }),
+  client: one(clients, {
+    fields: [transactions.clientId],
+    references: [clients.id],
+  }),
+  card: one(cards, {
+    fields: [transactions.cardId],
+    references: [cards.id],
+  }),
 }));
 
 export const loansRelations = relations(loans, ({ one, many }) => ({
   account: one(accounts, {
     fields: [loans.accountId],
     references: [accounts.id],
+  }),
+  client: one(clients, {
+    fields: [loans.clientId],
+    references: [clients.id],
+  }),
+  customerProduct: one(customerProducts, {
+    fields: [loans.customerProductId],
+    references: [customerProducts.id],
   }),
   payments: many(loanPayments),
 }));
@@ -225,6 +263,37 @@ export const loanPaymentsRelations = relations(loanPayments, ({ one }) => ({
     fields: [loanPayments.loanId],
     references: [loans.id],
   }),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  client: one(clients, {
+    fields: [events.clientId],
+    references: [clients.id],
+  }),
+  account: one(accounts, {
+    fields: [events.accountId],
+    references: [accounts.id],
+  }),
+  transaction: one(transactions, {
+    fields: [events.transactionId],
+    references: [transactions.id],
+  }),
+  loan: one(loans, {
+    fields: [events.loanId],
+    references: [loans.id],
+  }),
+  card: one(cards, {
+    fields: [events.cardId],
+    references: [cards.id],
+  }),
+  deposit: one(deposits, {
+    fields: [events.depositId],
+    references: [deposits.id],
+  }),
+  customerProduct: one(customerProducts, {
+    fields: [events.customerProductId],
+    references: [customerProducts.id],
+  })
 }));
 
 export type Setting = typeof settings.$inferSelect;
