@@ -86,7 +86,8 @@ export default function ProductCatalogDialog({
         `/api/clients/${clientId}/products`,
         {
           method: 'POST',
-          body: JSON.stringify(payload),
+          // Don't stringify the payload - apiRequest will do that for us
+          body: payload,
           headers: {
             'Content-Type': 'application/json',
           },
