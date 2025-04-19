@@ -1,7 +1,23 @@
+// Client types
+export interface Client {
+  id: number;
+  type: 'person' | 'business';
+  name: string;
+  identifier: string;  // SSN for persons, business ID for businesses
+  email: string;
+  phone?: string;
+  address?: string;
+  businessName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Account types
 export interface Account {
   id: number;
+  clientId: number;
   accountNumber: string;
+  name: string;
   type: 'personal' | 'business';
   balance: number;
   currency: string;
